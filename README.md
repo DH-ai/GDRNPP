@@ -1,3 +1,44 @@
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!--  PROJECT CONTEXT  —  added for synthetic-data-yolo-training pipeline   -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+
+> ## ⚙️ Fork / Project Context
+>
+> This is **not** a standalone clone. It is a **forked repo of [shanice-l/gdrnpp_bop2022](https://github.com/shanice-l/gdrnpp_bop2022)**, added here as a **git submodule** from our fork: **[DH-ai/gdrnpp_bop2022](https://github.com/DH-ai/gdrnpp_bop2022/)**.
+>
+> It is used as the 6D pose-estimation stage of the parent [Synthetic Data YOLO Training & Pose Estimation](../../README.md) pipeline: BlenderProc generates BOP-format synthetic data, YOLOX/YOLO provides detections, and GDRNPP is trained/fine-tuned here to produce the final 6D pose vector. The upstream usage docs below still apply — this section only adds our project-specific context, TODO, and quick-start.
+>
+> ### 🎯 Current main task
+>
+> **Generating the dataset** (BOP-format `train_pbr` from BlenderProc, with a correct `models_info.json`). Everything else below is queued behind getting valid training data in place.
+>
+> ### ✅ GDRNPP To-Do (pose vector + AWS steps)
+>
+> - [ ] Prep BOP-format data (BlenderProc `train_pbr` + correct `models_info.json` diameter / symmetries)
+> - [ ] Register the custom dataset (`ref/`, dataset loader, `dataset_factory.py`)
+> - [ ] Generate test scripts for AWS
+> - [ ] Run detector
+> - [ ] Train detector (YOLOX) → gives bounding box per object
+> - [ ] Test for GDR-Net
+> - [ ] Run GDR-Net on AWS
+> - [ ] Train GDR-Net pose network on the cropped detections → gives rotation + translation
+> - [ ] Run depth refinement (fast or iterative) → final refined 6D pose vector
+>
+> ### 🚀 How to (quick start)
+>
+> > **TODO:** Fill in the concrete commands as the pipeline is validated. Outline of the intended flow:
+> >
+> > 1. **Prepare data** — point GDRNPP at the BlenderProc-generated BOP dataset under `datasets/BOP_DATASETS/<your_dataset>/` (see *Path Setting* below). Ensure `models_info.json` has correct `diameter` and `symmetries`.
+> > 2. **Register the dataset** — add a ref file under `ref/`, wire up the dataset loader and `dataset_factory.py`.
+> > 3. **Detector** — train / run YOLOX to produce per-object bounding boxes (`det/`).
+> > 4. **Pose network** — train GDR-Net on the cropped detections (`configs/gdrn/...`) → rotation + translation.
+> > 5. **Refinement** — run depth-based refinement (fast or iterative) → final refined 6D pose.
+> > 6. **AWS** — see the generated AWS test/run scripts for cloud execution.
+>
+> _For full upstream setup (requirements, dataset structure, training/eval commands), continue reading below._
+
+<!-- ════════════════════════════════════════════════════════════════════ -->
+
 # GDRNPP for BOP2022
 
 This repo provides code and models for GDRNPP_BOP2022, **winner (most of the awards) of the BOP Challenge 2022 at ECCV'22 [[slides](http://cmp.felk.cvut.cz/sixd/workshop_2022/slides/bop_challenge_2022_results.pdf)]**.
