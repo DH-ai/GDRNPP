@@ -4,7 +4,7 @@
 
 > ## ⚙️ Fork / Project Context
 >
-> This is **not** a standalone clone. It is a **forked repo of [shanice-l/gdrnpp_bop2022](https://github.com/shanice-l/gdrnpp_bop2022)**, added here as a **git submodule** from our fork: **[DH-ai/gdrnpp_bop2022](https://github.com/DH-ai/gdrnpp_bop2022/)**.
+> This is **not** a standalone clone. It is a **forked repo of [shanice-l/gdrnpp_bop2022](https://github.com/shanice-l/gdrnpp_bop2022)**, added here as a **git submodule** from my fork: **[DH-ai/gdrnpp_bop2022](https://github.com/DH-ai/gdrnpp_bop2022/)** basically this repo.
 >
 > It is used as the 6D pose-estimation stage of the parent [Synthetic Data YOLO Training & Pose Estimation](../../README.md) pipeline: BlenderProc generates BOP-format synthetic data, YOLOX/YOLO provides detections, and GDRNPP is trained/fine-tuned here to produce the final 6D pose vector. The upstream usage docs below still apply — this section only adds our project-specific context, TODO, and quick-start.
 >
