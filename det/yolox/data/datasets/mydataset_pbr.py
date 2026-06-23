@@ -321,7 +321,7 @@ SPLITS_MY_DATASET_PBR = dict(
         ref_key="my_dataset",
     ),
     my_dataset_pbr_test=dict(
-        name="my_dataset_pbr_test   ",
+        name="my_dataset_pbr_test",
         objs=MY_DATASET_OBJS,  # selected 16 objects for BOP19/20
         dataset_root=osp.join(DATASETS_ROOT, "bop/train_pbr"),
         models_root=osp.join(DATASETS_ROOT, "bop/models"),

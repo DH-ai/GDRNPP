@@ -102,7 +102,7 @@ model = L(YOLOX)(
         in_channels=[256, 512, 1024],
     ),
     head=L(YOLOXHead)(
-        num_classes=1,
+        num_classes=3,
         width="${..backbone.width}",
         # width="${mul2: ${..backbone.width}}",  # NOTE: do not forget $
         in_channels="${..backbone.in_channels}",
