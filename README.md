@@ -1,4 +1,6 @@
 <!-- ════════════════════════════════════════════════════════════════════ -->
+
+> **Build or setup issue?** See [troubleshoot.md](./troubleshoot.md) for fixes to common Ceres / CUDA / PyTorch / detectron2 build errors.
 <!--  PROJECT CONTEXT  —  added for synthetic-data-yolo-training pipeline   -->
 <!-- ════════════════════════════════════════════════════════════════════ -->
 
