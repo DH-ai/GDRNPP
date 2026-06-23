@@ -70,7 +70,7 @@ class MY_DATASET_PBR_Dataset:
                                 d for d in os.listdir(self.dataset_root)
                                 if os.path.isdir(os.path.join(self.dataset_root, d))
                             )        
-        cat src/gdrnpp/det/yolox/data/datasets/__init__.py# for debug
+        # for debug
         # self.scenes = [f"{i:06d}" for i in range(1)]
 
     def __call__(self):
