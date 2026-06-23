@@ -8,3 +8,4 @@ from .datasets_wrapper import ConcatDataset, Dataset, MixConcatDataset
 from .mosaicdetection import MosaicDetection
 from .voc import VOCDetection
 from .base_data_from_list import Base_DatasetFromList
+from .mydataset_pbr import register_with_name_cfg
