@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+export CUDA_HOME=/mnt/data/conda-envs/gdrnpp_env
+export CUDA_HOME=/mnt/data/conda-envs/gdrnpp_env
 
 this_dir=$(dirname "$0")
 

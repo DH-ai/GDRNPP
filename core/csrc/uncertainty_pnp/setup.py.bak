@@ -1,14 +1,14 @@
-import os
+import  os
 import glob
-import re
 
+# Use SYSTEM Ceres 2.2 + Eigen, NOT the bundled 1.x headers
 ceres_include = "/usr/include"
 eigen_include = "/usr/include/eigen3"
 lib_dir = "/usr/lib/x86_64-linux-gnu"
 
-# Compile against SYSTEM Ceres 2.2 + Eigen. Ceres 2.x requires C++17.
+# Ceres 2.2 requires C++17
 ret = os.system(
-    "g++ -c src/uncertainty_pnp.cpp -o src/uncertainty_pnp.cpp.o "
+    "gcc -shared src/uncertainty_pnp.cpp -c -o src/uncertainty_pnp.cpp.o "
     "-fopenmp -fPIC -O2 -std=c++17 -I {} -I {}".format(ceres_include, eigen_include)
 )
 assert ret == 0, "compilation of uncertainty_pnp.cpp failed"
@@ -20,17 +20,14 @@ ffibuilder = FFI()
 with open(os.path.join(os.path.dirname(__file__), "src/ext.h")) as f:
     ffibuilder.cdef(f.read())
 
-libs = ["ceres", "glog"]
-for so in sorted(glob.glob(os.path.join(lib_dir, "libabsl_*.so"))):
-    libs.append(re.sub(r"^lib(.*)\.so$", r"\1", os.path.basename(so)))
-libs.append("stdc++")
-
 ffibuilder.set_source(
     "_ext",
-    '#include "src/ext.h"',
+    """
+    #include "src/ext.h"
+    """,
     extra_objects=["src/uncertainty_pnp.cpp.o"],
     library_dirs=[lib_dir],
-    libraries=libs,
+    libraries=["ceres", "glog", "stdc++"],
 )
 
 if __name__ == "__main__":
