@@ -17,12 +17,12 @@ train_dir = osp.join(dataset_root, "train_pbr")
 model_dir = osp.join(dataset_root, "models")
 
 
-objects = list(id2obj.values())
 id2obj = {
     1: "obj1",
     2: "obj2",
     3: "obj3",
 }
+objects = list(id2obj.values())
 obj2id = {v: k for k, v in id2obj.items()}
 obj_num = len(id2obj)
 
