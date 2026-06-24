@@ -23,6 +23,7 @@ from . import (
     itodd_d2,
     itodd_bop_test,
     mydataset_pbr,
+    mydataset_pbr_test
 )  # noqa
 
 cur_dir = osp.dirname(osp.abspath(__file__))
@@ -54,7 +55,8 @@ _DSET_MOD_NAMES = [
     "itodd_pbr",
     "itodd_d2",
     "itodd_bop_test",
-    "mydataset_pbr"
+    "mydataset_pbr",    
+    "mydataset_pbr_test"
 ]
 
 logger = logging.getLogger(__name__)
