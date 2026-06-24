@@ -302,45 +302,45 @@ def get_my_dataset_metadata(obj_names, ref_key):
 my_dataset_model_root = "bop/models/"
 ################################################################################
 
-MY_DATASET_OBJS = [ref.my_dataset.id2obj[_i] for _i in [1, 2, 3]]
+MY_DATASET_OBJS = [ref.mydataset.id2obj[_i] for _i in [1, 2, 3]]
 
 SPLITS_MY_DATASET_PBR = dict(
     my_dataset_pbr_train=dict(
         name="my_dataset_pbr_train",
-        objs=ref.my_dataset.objects,  # all 33 objects
+        objs=ref.mydataset.objects,  # all 3 objects
         dataset_root=osp.join(DATASETS_ROOT, "bop/train_pbr"),
         models_root=osp.join(DATASETS_ROOT, "bop/models"),
         scale_to_meter=0.001,
         with_masks=True,  # (load masks but may not use it)
         with_depth=True,  # (load depth path here, but may not use it)
-        height=480,
-        width=640,
+        height=1200,
+        width=1920,
         use_cache=True,
         num_to_load=-1,
         filter_invalid=True,
-        ref_key="my_dataset",
+        ref_key="mydataset",
     ),
     my_dataset_pbr_test=dict(
-        name="my_dataset_pbr_test",
+        name="mydataset_pbr_test",
         objs=MY_DATASET_OBJS,  # selected 16 objects for BOP19/20
         dataset_root=osp.join(DATASETS_ROOT, "bop/train_pbr"),
         models_root=osp.join(DATASETS_ROOT, "bop/models"),
         scale_to_meter=0.001,
         with_masks=True,  # (load masks but may not use it)
         with_depth=True,  # (load depth path here, but may not use it)
-        height=480,
-        width=640,
+        height=1200,
+        width=1920,
         use_cache=True,
         num_to_load=-1,
         filter_invalid=True,
-        ref_key="my_dataset",
+        ref_key="mydataset",
     ),
 )
 
 # single obj splits
-for obj in ref.my_dataset.objects:
+for obj in ref.mydataset.objects:
     for split in ["train_pbr"]:
-        name = "my_dataset_{}_{}".format(obj, split)
+        name = "mydataset_{}_{}".format(obj, split)
         if split in ["train_pbr"]:
             filter_invalid = True
         elif split in ["test"]:
@@ -356,12 +356,12 @@ for obj in ref.my_dataset.objects:
                 scale_to_meter=0.001,
                 with_masks=True,  # (load masks but may not use it)
                 with_depth=True,  # (load depth path here, but may not use it)
-                height=480,
-                width=640,
+                height=1200,
+                width=1920,
                 use_cache=True,
                 num_to_load=-1,
                 filter_invalid=filter_invalid,
-                ref_key="my_dataset",
+                ref_key="mydataset",
             )
 
 
@@ -383,7 +383,7 @@ def register_with_name_cfg(name, data_cfg=None):
     DatasetCatalog.register(name, MY_DATASET_PBR_Dataset(used_cfg))
     # something like eval_types
     MetadataCatalog.get(name).set(
-        id="my_dataset",  # NOTE: for pvnet to determine module
+        id="mydataset",  # NOTE: for pvnet to determine module
         ref_key=used_cfg["ref_key"],
         objs=used_cfg["objs"],
         eval_error_types=["ad", "rete", "proj"],
@@ -425,7 +425,7 @@ def test_vis():
         depth_masked[depth_masked > 3] = 0
         print(
             "depth masked, min: {} max: {}, mean: {}".format(
-                depth_masked.min(), depth_masked.max(), depth_masked.mean()
+                depth_maskesrc/gdrnpp/configsd.min(), depth_masked.max(), depth_masked.mean()
             )
         )
 
