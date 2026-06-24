@@ -59,7 +59,7 @@ class MY_DATASET_PBR_Dataset:
         ##################################################
 
         # NOTE: careful! Only the selected objects
-        self.cat_ids = [cat_id for cat_id, obj_name in ref.my_dataset.id2obj.items() if obj_name in self.objs]
+        self.cat_ids = [cat_id for cat_id, obj_name in ref.mydataset.id2obj.items() if obj_name in self.objs]
         # map selected objs to [0, num_objs-1]
         self.cat2label = {v: i for i, v in enumerate(self.cat_ids)}  # id_map
         self.label2cat = {label: cat for cat, label in self.cat2label.items()}
@@ -259,7 +259,7 @@ class MY_DATASET_PBR_Dataset:
         models = []
         for obj_name in self.objs:
             model = inout.load_ply(
-                osp.join(self.models_root, f"obj_{ref.my_dataset.obj2id[obj_name]:06d}.ply"),
+                osp.join(self.models_root, f"obj_{ref.mydataset.obj2id[obj_name]:06d}.ply"),
                 vertex_scale=self.scale_to_meter,
             )
             # NOTE: the bbox3d_and_center is not obtained from centered vertices
@@ -305,8 +305,8 @@ my_dataset_model_root = "bop/models/"
 MY_DATASET_OBJS = [ref.mydataset.id2obj[_i] for _i in [1, 2, 3]]
 
 SPLITS_MY_DATASET_PBR = dict(
-    my_dataset_pbr_train=dict(
-        name="my_dataset_pbr_train",
+    mydataset_pbr_train=dict(
+        name="mydataset_pbr_train",
         objs=ref.mydataset.objects,  # all 3 objects
         dataset_root=osp.join(DATASETS_ROOT, "bop/train_pbr"),
         models_root=osp.join(DATASETS_ROOT, "bop/models"),
@@ -320,7 +320,7 @@ SPLITS_MY_DATASET_PBR = dict(
         filter_invalid=True,
         ref_key="mydataset",
     ),
-    my_dataset_pbr_test=dict(
+    mydataset_pbr_test=dict(
         name="mydataset_pbr_test",
         objs=MY_DATASET_OBJS,  # selected 16 objects for BOP19/20
         dataset_root=osp.join(DATASETS_ROOT, "bop/train_pbr"),
