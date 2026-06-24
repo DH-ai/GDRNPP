@@ -30,10 +30,17 @@ from det.yolox.engine.yolox_trainer import YOLOX_DefaultTrainer
 from det.yolox.utils import fuse_model
 from det.yolox.data.datasets.dataset_factory import register_datasets_in_cfg
 
-
+import os 
+import torch
 logger = logging.getLogger("detectron2")
 
 
+print("MAIN START")
+print("CUDA_VISIBLE_DEVICES =", os.environ.get("CUDA_VISIBLE_DEVICES"))
+print("CUDA AVAILABLE =", torch.cuda.is_available())
+print("CUDA COUNT =", torch.cuda.device_count())
+
+# exit()
 def setup(args):
     """Create configs and perform basic setups."""
     cfg = LazyConfig.load(args.config_file)

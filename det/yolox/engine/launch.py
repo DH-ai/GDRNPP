@@ -130,7 +130,17 @@ def _distributed_worker(
 
     # synchronize is needed here to prevent a possible timeout after calling init_process_group
     # See: https://github.com/facebookresearch/maskrcnn-benchmark/issues/172
-    comm.synchronize()
+    comm.synchronize()  
+
+    print("=" * 80)
+    print("cfg.train.device =", cfg.train.device)
+    print("CUDA_VISIBLE_DEVICES =", os.environ.get("CUDA_VISIBLE_DEVICES"))
+    print("torch.cuda.is_available =", torch.cuda.is_available())
+    print("torch.cuda.device_count =", torch.cuda.device_count())
+    print("=" * 80)
+
+
+    exit()
 
     assert num_gpus_per_machine <= torch.cuda.device_count()
     torch.cuda.set_device(local_rank)

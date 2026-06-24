@@ -14,5 +14,7 @@ NCCL_DEBUG=INFO
 OMP_NUM_THREADS=1
 MKL_NUM_THREADS=1
 PYTHONPATH="$this_dir/../..":$PYTHONPATH \
+echo "PYTHONPATH=$PYTHONPATH"
 CUDA_VISIBLE_DEVICES=$2 python $this_dir/main_yolox.py \
     --config-file $CFG --num-gpus $NGPU  ${@:3}
+# 

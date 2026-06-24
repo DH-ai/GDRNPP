@@ -52,7 +52,7 @@ else:
     _printable_high_ascii = bytes(range(127, 256))
 
 
-def is_binary_string(bytes_to_check):
+def is_binary_string_old(bytes_to_check):
     """Uses a simplified version of the Perl detection algorithm, based roughly
     on Eli Bendersky's translation to Python:
     http://eli.thegreenplace.net/2011/10/19/perls-guess-if-file-is-text-or-
@@ -135,3 +135,7 @@ def is_binary_string(bytes_to_check):
                 logger.debug("has nulls:" + repr(b"\x00" in bytes_to_check))
                 return True
         return False
+
+
+def is_binary_string(bytes_to_check):
+    return b"\0" in bytes_to_check

@@ -604,12 +604,27 @@ def load_ply(path, vertex_scale=1.0):
         model["texture_uv_face"] = np.zeros((n_faces, 6), np.float)
 
     # Formats for the binary case.
+    # Older versions of the PLY format use the following data types:
+    # formats = {
+    #     "float": ("f", 4),
+    #     "double": ("d", 8),
+    #     "int": ("i", 4),
+    #     "uchar": ("B", 1),
+    # }
+    # Patch grep -n "formats = {" lib/pysixd/inout.py
     formats = {
-        "float": ("f", 4),
-        "double": ("d", 8),
-        "int": ("i", 4),
-        "uchar": ("B", 1),
-    }
+    "float": ("f", 4),
+    "double": ("d", 8),
+
+    "char": ("b", 1),
+    "uchar": ("B", 1),
+
+    "short": ("h", 2),
+    "ushort": ("H", 2),
+
+    "int": ("i", 4),
+    "uint": ("I", 4),
+}
 
     # Load vertices.
     for pt_id in range(n_pts):
