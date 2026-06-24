@@ -25,9 +25,9 @@ model_dir = osp.join(bop_root, "models")
 
 
 id2obj = {
-    1: "obj1",
-    2: "obj2",
-    3: "obj3",
+    1: "heart_shape",
+    2: "semi_circle",
+    3: "triangle_shape",
 }
 objects = list(id2obj.values())
 obj2id = {v: k for k, v in id2obj.items()}
