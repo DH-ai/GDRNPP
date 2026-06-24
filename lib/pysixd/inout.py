@@ -682,12 +682,12 @@ def load_ply(path, vertex_scale=1.0):
                 val = struct.unpack(format[0], f.read(format[1]))[0]
                 if prop[0] == "n_corners":
                     if val != face_n_corners:
-                        raise ValueError("Only triangular faces are supported.")
+                        raise ValueError(f"Only triangular faces are supported, for model {path}.")
                         # print("Number of face corners: " + str(val))
                         # exit(-1)
                 elif prop[0] == "texcoord":
                     if val != face_n_corners * 2:
-                        raise ValueError("Wrong number of UV face coordinates.")
+                        raise ValueError(f"Wrong number of UV face coordinates for model {path}.")
                 else:
                     prop_vals[prop[0]] = val
         else:
@@ -695,10 +695,10 @@ def load_ply(path, vertex_scale=1.0):
             for prop_id, prop in enumerate(face_props):
                 if prop[0] == "n_corners":
                     if int(elems[prop_id]) != face_n_corners:
-                        raise ValueError("Only triangular faces are supported.")
+                        raise ValueError(f"Only triangular faces are supported, for model {path}.")
                 elif prop[0] == "texcoord":
                     if int(elems[prop_id]) != face_n_corners * 2:
-                        raise ValueError("Wrong number of UV face coordinates.")
+                        raise ValueError(f"Wrong number of UV face coordinates for model {path}.")
                 else:
                     prop_vals[prop[0]] = elems[prop_id]
 
