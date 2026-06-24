@@ -23,7 +23,7 @@ def main():
     parser.add_argument("--res_path", help="path to the merged csv files", required=True)
 
     args = parser.parse_args()
-    print("input files: ", args.paths)
+    print("input files: ", args.paths)src/gdrnpp/lib
     print("number of input files: ", len(args.paths))
 
     # merge files
