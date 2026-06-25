@@ -20,7 +20,7 @@ train.amp.enabled = True
 model.backbone.depth = 1.33
 model.backbone.width = 1.25
 
-model.head.num_classes = 33
+model.head.num_classes = 3
 
 train.init_checkpoint = "pretrained_models/yolox/yolox_x.pth"
 
@@ -29,7 +29,7 @@ DATASETS.TRAIN = ["mydataset_pbr_train"]
 DATASETS.TEST = ["mydataset_pbr_test"]
 
 dataloader.train.dataset.lst.names = DATASETS.TRAIN
-dataloader.train.total_batch_size = 32
+dataloader.train.total_batch_size = 4
 
 # color aug
 dataloader.train.aug_wrapper.COLOR_AUG_PROB = 0.8

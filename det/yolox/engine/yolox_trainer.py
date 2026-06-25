@@ -388,7 +388,8 @@ class YOLOX_DefaultTrainer(TrainerBase):
         self.grad_scaler.scale(losses).backward()
 
         # write metrics before opt step
-        self._write_metrics(loss_dict, data_time)
+        # self._write_metrics(loss_dict, data_time) patch: src/gdrnpp/det/yolox/engine/yolox_trainer.py
+        self._write_metrics(None, loss_dict, data_time)
 
         self.grad_scaler.step(self.optimizer)
         self.grad_scaler.update()
@@ -414,7 +415,7 @@ class YOLOX_DefaultTrainer(TrainerBase):
         if self.cfg.train.random_size is not None and self.iter % 10 == 0:
             is_distributed = comm.get_world_size() > 1
             self.input_size = self.random_resize(self.data_loader, self.epoch, comm.get_rank(), is_distributed)
-
+    # @staticmethod
     def _write_metrics(
         self,
         processes,
