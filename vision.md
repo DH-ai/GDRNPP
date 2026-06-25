@@ -1,383 +1,107 @@
-# Vision
+# GDRNPP Modernized Vision
 
-> Building the next-generation open-source toolkit for custom 6D object pose estimation, synthetic data generation, and robotic perception.
+> A maintained, modernized, and developer-friendly GDRNPP codebase for 6D object pose estimation.
 
----
+## Motivation
 
-# Motivation
+GDRNPP remains one of the strongest open-source baselines for 6D object pose estimation, but the surrounding Python, PyTorch, CUDA, NumPy, Detectron2, and dataset tooling ecosystems have moved on. The original repository was designed around older dependency versions and benchmark-style datasets that are assumed to be complete and correctly formatted.
 
-GDRNPP is one of the strongest open-source frameworks for 6D object pose estimation. However, it was primarily designed for benchmark datasets such as BOP, where the data is assumed to be complete, consistent, and correctly formatted.
+This repository exists to make GDRNPP practical to use in a modern development environment while staying close enough to upstream that fixes remain understandable, reviewable, and maintainable.
 
-During the integration of custom synthetic datasets generated with BlenderProc, several shortcomings became apparent.
+## Current Problems
 
-The current framework assumes that every dataset is perfect.
+Modern users run into a mix of compatibility and workflow issues:
 
-Typical examples include:
+- Python APIs removed or moved in Python 3.10 and newer.
+- NumPy aliases removed in NumPy 2.x.
+- PyTorch and AMP APIs changing across PyTorch 2.x releases.
+- Detectron2, MMCV, CUDA, and build tooling compatibility drift.
+- PLY and mesh parsing assumptions that fail on modern Blender exports.
+- Dataset loaders that fail late with assertions, missing keys, or unclear errors.
+- Limited guidance for custom datasets, dataset validation, repair, and debugging.
+- Sparse test coverage and no clear CI contract for supported environments.
 
-```python
-assert osp.exists(rgb_path)
-assert osp.exists(depth_path)
+These are engineering maintenance problems, not reasons to redesign the whole project.
 
-gt_info[str_im_id]
-```
+## Project Vision
 
-When something is missing, the program immediately crashes with errors such as
+The goal of this repository is to answer a narrow question:
 
-```
-AssertionError
-KeyError: '112'
-JSONDecodeError
-```
+> What would GDRNPP look like if it were actively maintained in 2026?
 
-without answering the questions developers actually need:
+This project should modernize GDRNPP without turning it into a completely different framework. The repository should remain recognizable to upstream users while adding the compatibility fixes, documentation, validation tools, and developer experience improvements needed for real custom-dataset work.
 
-* What is missing?
-* How many samples are affected?
-* Can the dataset be repaired?
-* Is the entire dataset corrupted or only a few images?
-* Can training safely continue?
+The intended outcome is a healthy GDRNPP fork that can be used directly for training, evaluation, and inference, and that can also serve as a reliable backend for larger future systems.
 
-While this assumption works well for official benchmark datasets, it becomes a major obstacle when working with custom datasets, synthetic data generation pipelines, or large-scale experimentation.
+## Design Principles
 
-This project aims to bridge that gap.
+### Stay Close to Upstream
 
----
+Changes should be small, logical, and easy to review. A compatibility fix, dataset improvement, parser fix, or logging improvement should be understandable as its own patch.
 
-# Vision
+### Modernize Before Rewriting
 
-The goal is not simply to patch compatibility issues or support one custom dataset.
+The first priority is to make the existing system build, run, train, and fail clearly on modern machines. Large architecture changes should wait until the modernization baseline is stable.
 
-The vision is to transform GDRNPP into a modern, extensible, and developer-friendly platform covering the complete lifecycle of 6D object perception.
+### Prefer Explicit Failures
 
-The framework should support everything from CAD model preparation and synthetic data generation to dataset validation, model training, evaluation, deployment, and robotic integration.
+Dataset and dependency failures should explain what failed, where it failed, and how to fix it. A clear validation report is better than a late `AssertionError`, `KeyError`, or `JSONDecodeError`.
 
-Rather than assuming datasets are correct, the framework should help users build correct datasets.
+### Treat Custom Datasets as First-Class
 
-Long term, the project aims to become the standard development environment for custom 6D pose estimation research and production deployments.
+Official benchmark datasets are still important, but custom BOP-style datasets, synthetic datasets, BlenderProc outputs, and partially generated datasets should be documented and validated before training begins.
 
----
+### Keep Fixes Reusable
 
-# Core Principles
+Every fix should be clean enough that it could reasonably be proposed upstream or maintained independently. Avoid one-off hacks that only work for a single local dataset path or machine.
 
-## Reliability over Assumptions
+## Modernization Goals
 
-Datasets should never be assumed to be valid.
+This repository should support:
 
-Every dataset should be validated before training begins.
-
-Missing files, corrupted annotations, inconsistent metadata, partial renders, invalid meshes, interrupted exports, and inconsistent dataset structures should be detected automatically.
-
-Errors should be descriptive rather than cryptic.
-
----
-
-## Automation over Manual Repair
-
-Most dataset issues are deterministic.
-
-If a problem can be repaired automatically, the framework should provide a repair utility instead of requiring users to manually edit JSON files or regenerate datasets.
-
-Examples include:
-
-* rebuilding `scene_gt_info`
-* rebuilding `scene_camera`
-* regenerating bounding boxes from masks
-* rebuilding `models_info.json`
-* triangulating meshes
-* repairing interrupted dataset exports
-* removing incomplete samples
-* validating BOP compliance
-
----
-
-## Modern Software Engineering
-
-The original repository reflects the Python ecosystem available when it was created.
-
-This project modernizes the stack by supporting:
-
-* Python 3.10+
-* Modern PyTorch
-* Current Detectron2
-* NumPy 2.x
-* Current CUDA toolchains
-* Improved dependency management
-* Type hints
-* Structured logging
-* Unit tests
-* CI/CD pipelines
-* Modular architecture
-* Comprehensive documentation
-
----
+- Python 3.10 through 3.13 where feasible.
+- PyTorch 2.x and current CUDA toolchains.
+- NumPy 2.x compatibility.
+- Updated dependency constraints with documented compatibility windows.
+- Better handling of Detectron2, MMCV, YOLOX, and build dependencies.
+- Modern AMP APIs such as `torch.amp.GradScaler("cuda", ...)`.
+- Improved PLY parsing and mesh metadata generation.
+- Dataset validation, repair, statistics, and visualization tools.
+- Better logging, error messages, and troubleshooting docs.
+- CI, unit tests, regression tests, and compatibility checks.
+- Examples for custom datasets and synthetic data workflows.
 
 ## Developer Experience
 
-Good tooling is as important as good models.
+Developers should be able to understand failures quickly. Instead of training crashing deep inside a loader because a sample is incomplete, the repository should provide tools that answer:
 
-Instead of failing with
+- Which files or annotations are missing?
+- How many samples are affected?
+- Is the dataset repairable?
+- Can incomplete samples be skipped or removed?
+- Which command should be run next?
 
-```
-KeyError: '112'
-```
+Good developer experience also means predictable setup, clear docs, modern dependency files, reproducible examples, and a changelog that records compatibility decisions.
 
-the framework should report
+## Long-Term Maintenance
 
-```
-Dataset Validation Error
+This project should be maintained like a reusable library rather than a private research folder. Important modernization work should be captured as focused commits and, where useful, patch files or design notes.
 
-Scene : 000000
-Image : 112
+GitHub Issues should track actionable work items such as:
 
-Missing
+- Python 3.12 support.
+- NumPy 2.x compatibility.
+- Dataset path resolution fixes.
+- Dataset validator implementation.
+- Dead download link replacement.
+- Checksum verification for downloaded assets.
 
-✓ RGB
-✓ Depth
-✗ scene_gt_info
-✓ Masks
+Documentation should track the roadmap, architecture, design decisions, TODOs, and changes so that work is not lost while debugging training runs.
 
-Suggested Fix
+## Relationship to Future Projects
 
-python tools/dataset/repair.py \
-    --scene 000000 \
-    --image 112
-```
+This repository is not OpenPose3D. It should not grow into a full perception platform with every model, foundation model, robotics adapter, and VLA pipeline.
 
-Developers should spend their time improving models—not debugging datasets.
+OpenPose3D or a future pose toolkit should be a separate project that uses this repository as one backend among many. In that future architecture, GDRNPP Modernized is responsible for being a robust GDRNPP implementation, while the broader toolkit owns orchestration, multiple backends, robotics integration, foundation model integration, and higher-level APIs.
 
----
-
-# Documentation First
-
-Excellent software deserves excellent documentation.
-
-The project should provide documentation for users at every experience level.
-
-Documentation should include:
-
-* Beginner setup guides
-* Installation on Linux, Windows, and Docker
-* Dataset creation walkthroughs
-* BlenderProc integration tutorials
-* BOP format explanations
-* Custom dataset onboarding
-* Training pipelines
-* Evaluation workflows
-* Inference examples
-* API documentation
-* System architecture documentation
-* Developer guides
-* Contribution guides
-
-A new user should be able to go from a CAD model to a trained pose estimator without reading source code.
-
----
-
-# Dataset-First Design
-
-Custom datasets are first-class citizens.
-
-The repository should include tooling for:
-
-* dataset validation
-* automatic repair
-* visualization
-* statistics
-* mesh verification
-* mesh conversion
-* annotation verification
-* metadata generation
-* dataset versioning
-* dataset comparison
-* BOP compatibility checking
-
-Training should never begin before dataset integrity has been verified.
-
-Example:
-
-```
-Loading dataset...
-
-Checking integrity...
-
-✓ RGB Images ............. 1000
-✓ Depth Images ........... 1000
-✓ Masks .................. 1000
-✓ scene_gt.json .......... OK
-✗ scene_gt_info.json ..... Missing 1 entry
-
-Found 1 corrupted sample.
-
-Run:
-
-python tools/dataset/repair.py
-```
-
-instead of discovering the issue several minutes later through a runtime exception.
-
----
-
-# Mesh Processing Pipeline
-
-Preparing CAD models is often one of the most time-consuming parts of building a custom dataset.
-
-The framework should automate:
-
-* mesh validation
-* triangulation
-* topology verification
-* manifold checking
-* watertight verification
-* unit verification
-* symmetry definition
-* diameter computation
-* bounding box computation
-* coordinate system validation
-* `models_info.json` generation
-
-The goal is to eliminate repetitive manual preprocessing.
-
----
-
-# Robust Dataset Generation
-
-Synthetic dataset generation should be resilient to interruptions.
-
-Interrupted rendering currently results in problems such as:
-
-* partially written JSON files
-* missing RGB images
-* missing depth maps
-* missing masks
-* inconsistent image counts
-* corrupted annotations
-
-Future exporters should use validation and atomic writes so partially generated datasets can always be detected, repaired, or resumed safely.
-
----
-
-# Support for Multiple Pose Estimation Models
-
-The toolkit should not be tied to a single research paper.
-
-GDRNPP is only one backend.
-
-Future support should include additional 6D pose estimation models through a unified interface.
-
-Examples include:
-
-* GDRNPP
-* FoundationPose
-* MegaPose
-* CosyPose
-* Gen6D
-* SurfEmb
-* Foundation-model-based pose estimators
-* Future research models
-
-Users should be able to switch models with minimal configuration changes while reusing the same datasets, preprocessing, and evaluation pipelines.
-
----
-
-# BOP as the Standard Dataset Interface
-
-The BOP dataset format has become the de facto standard for 6D pose estimation.
-
-The toolkit should adopt BOP as its internal representation.
-
-Every supported dataset should be importable into a BOP-compatible structure.
-
-Similarly, outputs should remain compatible with existing BOP evaluation tools.
-
-This allows interoperability across multiple training frameworks and research projects.
-
----
-
-# Foundation Models and Vision-Language Integration
-
-Modern robotic systems increasingly rely on foundation models.
-
-Future development should include optional integration with:
-
-* Vision-Language Models (VLMs)
-* Vision-Language-Action (VLA) models
-* Open-vocabulary object detection
-* Referring expression grounding
-* Semantic scene understanding
-* Automatic dataset annotation
-
-The objective is to bridge traditional geometric pose estimation with modern multimodal perception systems.
-
----
-
-# Modular Architecture
-
-Rather than treating functionality as standalone scripts, the repository should be organized into reusable modules.
-
-```
-dataset/
-├── loaders/
-├── validators/
-├── repair/
-├── converters/
-├── visualization/
-└── statistics/
-
-mesh/
-├── validation/
-├── processing/
-└── conversion/
-
-training/
-├── detection/
-├── pose/
-└── evaluation/
-
-models/
-├── gdrnpp/
-├── megapose/
-├── foundationpose/
-└── ...
-
-tools/
-├── train_detection.py
-├── train_pose.py
-├── infer.py
-├── evaluate.py
-├── export.py
-└── dataset/
-```
-
-Each module should have a single responsibility while exposing reusable APIs for future extensions.
-
----
-
-# Long-Term Goal
-
-The long-term objective extends beyond maintaining an improved fork of GDRNPP.
-
-The project aims to become a complete open-source perception toolkit.
-
-```
-OpenPose3D Toolkit
-
-├── CAD Model Processing
-├── Synthetic Data Generation
-├── Dataset Validation
-├── Dataset Repair
-├── Dataset Conversion
-├── Dataset Visualization
-├── Dataset Statistics
-├── Object Detection Training
-├── 6D Pose Training
-├── Multiple Pose Estimation Backends
-├── Foundation Model Integration
-├── Evaluation
-├── Deployment
-├── Robotics Integration
-└── Production Tooling
-```
-
-GDRNPP serves as the foundation, but the toolkit expands beyond it by emphasizing robustness, automation, reproducibility, extensibility, and developer experience.
-
-The ultimate goal is to provide a framework that enables researchers and engineers to spend less time debugging datasets and infrastructure, and more time building better perception systems.
+This project also serves as a stable backend for future 6D pose estimation tooling, synthetic data pipelines, and robotics applications.
