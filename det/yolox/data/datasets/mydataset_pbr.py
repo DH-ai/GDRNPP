@@ -129,10 +129,22 @@ class MY_DATASET_PBR_Dataset:
                 K = np.array(cam_dict[str_im_id]["cam_K"], dtype=np.float32).reshape(3, 3)
                 depth_factor = 1000.0 / cam_dict[str_im_id]["depth_scale"]  # 10000
 
+                # TODO: Instead of storing absolute paths, store relative paths during dataset creation
+                # and convert back to absolute paths during dataset loading:
+                #   Dataset creation: store relative paths
+                #     ↓
+                #   Dataset loading: convert back to absolute paths
+                # Example:
+                #   record["file_name"] = osp.relpath(rgb_path, PROJ_ROOT)
+                #   # Later in loading:
+                #   file_name = osp.join(PROJ_ROOT, dataset_dict["file_name"])
+
                 record = {
                     "dataset_name": self.name,
-                    "file_name": osp.relpath(rgb_path, PROJ_ROOT),
-                    "depth_file": osp.relpath(depth_path, PROJ_ROOT),
+                    # "file_name": osp.relpath(rgb_path, PROJ_ROOT),
+                    # "depth_file": osp.relpath(depth_path, PROJ_ROOT),
+                    "file_name": rgb_path,
+                    "depth_file":depth_path,
                     "height": self.height,
                     "width": self.width,
                     "image_id": int_im_id,

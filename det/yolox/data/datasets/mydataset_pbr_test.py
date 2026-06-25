@@ -406,6 +406,8 @@ def test_vis():
 
     dirname = "output/{}-data-vis".format(dset_name)
     os.makedirs(dirname, exist_ok=True)
+
+    # case 1 ./core/gdrn_modeling/datasets/mydataset_pbr.py:415:        img = read_image_mmcv(d["file_name"], format="BGR")
     for d in dicts:
         img = read_image_mmcv(d["file_name"], format="BGR")
         detection_utils.check_image_size(d, img)
@@ -464,3 +466,4 @@ if __name__ == "__main__":
     register_with_name_cfg(sys.argv[1])
     print("dataset catalog: ", DatasetCatalog.list())
     test_vis()
+ 

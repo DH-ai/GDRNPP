@@ -120,6 +120,7 @@ class YOLOX_DefaultTrainer(TrainerBase):
         self.input_size = train_loader_cfg.dataset.img_size
         train_loader = instantiate(train_loader_cfg)
 
+
         # TODO: support train2 and train2_ratio
         ims_per_batch = train_loader_cfg.total_batch_size
         # only using train to determine iters_per_epoch
@@ -415,8 +416,8 @@ class YOLOX_DefaultTrainer(TrainerBase):
             self.input_size = self.random_resize(self.data_loader, self.epoch, comm.get_rank(), is_distributed)
 
     def _write_metrics(
-        self,processes
-
+        self,
+        processes,
         loss_dict: Mapping[str, torch.Tensor],
         data_time: float,
         prefix: str = "",
@@ -559,7 +560,7 @@ class YOLOX_DefaultTrainer(TrainerBase):
             model,
             instantiate(cfg.dataloader.test),
             evaluator=evaluator,
-            amp_test=cfg.test.amp_test,
+            ampf_test=cfg.test.amp_test,
             half_test=cfg.test.half_test,
             test_cfg=cfg.test,
             val_cfg=cfg.val,

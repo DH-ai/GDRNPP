@@ -68,6 +68,9 @@ def main(args):
         return res
     # train
     trainer = Trainer(cfg)
+    print("trainer.model = ", trainer.model)
+    print("trainer.optimizer = ", trainer.optimizer)
+    print("trainer.")
     trainer.resume_or_load(resume=args.resume)
     return trainer.train()
 

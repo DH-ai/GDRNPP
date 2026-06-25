@@ -131,8 +131,8 @@ class MY_DATASET_PBR_Dataset:
 
                 record = {
                     "dataset_name": self.name,
-                    "file_name": osp.relpath(rgb_path, PROJ_ROOT),
-                    "depth_file": osp.relpath(depth_path, PROJ_ROOT),
+                    "file_name": rgb_path,
+                    "depth_file": depth_path,
                     "height": self.height,
                     "width": self.width,
                     "image_id": int_im_id,
@@ -514,7 +514,7 @@ if __name__ == "__main__":
     from lib.utils.mask_utils import mask_erode_cv2
     from lib.vis_utils.image import heatmap
 
-    print("sys.argv:", sys.argv)
+    print("sys.argv:", sys.argv) 
     logger = setup_my_logger(name="core")
     register_with_name_cfg(sys.argv[1])
     print("dataset catalog: ", DatasetCatalog.list())
