@@ -51,8 +51,10 @@ def read_image_mmcv(file_name, format=None):
     else:
         if format not in [None, "BGR"]:
             raise ValueError(f"Invalid format: {format}")
-
-    image = mmcv.imread(file_name, flag, channel_order)
+    try:
+        image = mmcv.imread(file_name, flag, channel_order)
+    except Exception as e:
+        raise ValueError(f"Error reading image {file_name}: {e}")
     return image
 
 

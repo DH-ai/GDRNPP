@@ -415,7 +415,8 @@ class YOLOX_DefaultTrainer(TrainerBase):
             self.input_size = self.random_resize(self.data_loader, self.epoch, comm.get_rank(), is_distributed)
 
     def _write_metrics(
-        self,
+        self,processes
+
         loss_dict: Mapping[str, torch.Tensor],
         data_time: float,
         prefix: str = "",

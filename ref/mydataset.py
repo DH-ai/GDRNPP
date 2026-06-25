@@ -13,7 +13,7 @@ K = np.array([[2481.9412514178307, 0.0, 978.95936559694314],
 
 
 cur_dir = osp.abspath(osp.dirname(__file__))
-root_dir = osp.normpath(osp.join(cur_dir, "../../blenderproc_proj/"))
+root_dir = osp.normpath("/mnt/data/work/synthetic-data-yolo-training_and_pose_estimation/src/blenderproc_proj")
 
 data_root = osp.join(root_dir, "output")
 bop_root = osp.join(data_root, "bop")
