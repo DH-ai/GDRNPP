@@ -44,19 +44,33 @@ print("CUDA COUNT =", torch.cuda.device_count())
 def setup(args):
     """Create configs and perform basic setups."""
     cfg = LazyConfig.load(args.config_file)
-    cfg = LazyConfig.apply_overrides(cfg, args.opts)
-    default_yolox_setup(cfg, args)
+
+    default_yolox_setup(cfg, args) # 
     register_datasets_in_cfg(cfg)
+
     setproctitle("{}.{}".format(cfg.train.exp_name, get_time_str()))
     return cfg
 
 
 @loguru_logger.catch
 def main(args):
+    
     cfg = setup(args)
+    print("="*50)
+    print(cfg)
+    # exit()
     Trainer = YOLOX_DefaultTrainer
+
+    print("="*50)
+    print("="*50)
+    print("="*50)
+
+    print(args.eval_only)
+    
     if args.eval_only:  # eval
         model = Trainer.build_model(cfg)
+        print(cfg)
+        exit()
         MyCheckpointer(model, save_dir=cfg.train.output_dir).resume_or_load(
             cfg.train.init_checkpoint, resume=args.resume
         )
@@ -77,6 +91,8 @@ def main(args):
 
 if __name__ == "__main__":
     args = default_argument_parser().parse_args()
+    print("="*50)
+    
     launch(
         main,
         args.num_gpus,
