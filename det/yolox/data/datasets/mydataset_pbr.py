@@ -284,7 +284,7 @@ class MY_DATASET_PBR_Dataset:
         return models
 
     def image_aspect_ratio(self):
-        return self.width / self.height  # 4/3
+        return self.width / self.height  
 
 
 ########### register datasets ############################################################
@@ -368,8 +368,8 @@ for obj in ref.mydataset.objects:
                 scale_to_meter=0.001,
                 with_masks=True,  # (load masks but may not use it)
                 with_depth=True,  # (load depth path here, but may not use it)
-                height=1200,
-                width=1920,
+                height=600,
+                width=960,
                 use_cache=True,
                 num_to_load=-1,
                 filter_invalid=filter_invalid,
@@ -437,7 +437,7 @@ def test_vis():
         depth_masked[depth_masked > 3] = 0
         print(
             "depth masked, min: {} max: {}, mean: {}".format(
-                depth_maskesrc/gdrnpp/configsd.min(), depth_masked.max(), depth_masked.mean()
+                d.min(), depth_masked.max(), depth_masked.mean()
             )
         )
 

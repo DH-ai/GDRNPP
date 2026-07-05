@@ -29,7 +29,6 @@ from det.yolox.engine.yolox_setup import default_yolox_setup
 from det.yolox.engine.yolox_trainer import YOLOX_DefaultTrainer
 from det.yolox.utils import fuse_model
 from det.yolox.data.datasets.dataset_factory import register_datasets_in_cfg
-
 import os 
 import torch
 logger = logging.getLogger("detectron2")
@@ -45,8 +44,8 @@ def setup(args):
     """Create configs and perform basic setups."""
     cfg = LazyConfig.load(args.config_file)
 
-    default_yolox_setup(cfg, args) # 
-    register_datasets_in_cfg(cfg)
+    default_yolox_setup(cfg, args) # setup basic dectron2 logger, logs basic info about config cmd line arguments 
+    register_datasets_in_cfg(cfg) # actual datset registraion
 
     setproctitle("{}.{}".format(cfg.train.exp_name, get_time_str()))
     return cfg
@@ -61,16 +60,11 @@ def main(args):
     # exit()
     Trainer = YOLOX_DefaultTrainer
 
-    print("="*50)
-    print("="*50)
-    print("="*50)
 
     print(args.eval_only)
     
     if args.eval_only:  # eval
         model = Trainer.build_model(cfg)
-        print(cfg)
-        exit()
         MyCheckpointer(model, save_dir=cfg.train.output_dir).resume_or_load(
             cfg.train.init_checkpoint, resume=args.resume
         )

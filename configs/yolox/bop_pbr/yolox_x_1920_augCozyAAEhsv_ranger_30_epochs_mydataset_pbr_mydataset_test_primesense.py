@@ -91,7 +91,7 @@ dataloader.test = [
             split="test",
             lst=L(get_detection_dataset_dicts)(names=test_dataset_name, filter_empty=False),
             img_size="${test.test_size}",
-            preproc=L(ValTransform)(
+            preproc=L(ValTransform)( # so here the resizing isactually happening
                 legacy=False,
             ),
         ),
