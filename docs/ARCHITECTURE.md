@@ -58,6 +58,10 @@ GDRNPP training / evaluation / inference
 
 The validator should fail early with clear reports instead of allowing incomplete datasets to fail deep inside training.
 
+For a deeper passive audit of the current BOP loading, YOLOX detector, GDRNPP
+pose pipeline, detector replacement boundary, and image-size scaling issues, see
+[`DATA_DETECTION_POSE_ARCHITECTURE_AUDIT.md`](DATA_DETECTION_POSE_ARCHITECTURE_AUDIT.md).
+
 ## Mesh Flow
 
 The intended mesh flow is:
