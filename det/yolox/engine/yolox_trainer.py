@@ -419,7 +419,7 @@ class YOLOX_DefaultTrainer(TrainerBase):
     def _write_metrics(
         self,
         processes,
-        loss_dict: Mapping[str, torch.Tensor],
+        loss_dict: Mapping[str, torch.Tensor],  
         data_time: float,
         prefix: str = "",
     ) -> None:

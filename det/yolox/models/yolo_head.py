@@ -408,7 +408,16 @@ class YOLOXHead(nn.Module):
             raise NotImplementedError("Unknown cls_loss_type: {}".format(self.cls_loss_type))
 
         if self.use_l1:
-            loss_l1 = (self.l1_loss(origin_preds.view(-1, 4)[fg_masks], l1_targets)).sum() / num_fg
+            try:
+                loss_l1 = (self.l1_loss(origin_preds.view(-1, 4)[fg_masks], l1_targets)).sum() / num_fg
+            except Exception as e:
+                logger.error("L1 loss failed: {}, changed to CPU mode.".format(e))
+                torch.cuda.empty_cache()
+                logger.error("loss_l1 = (self.l1_loss(origin_preds.view(-1, 4)[fg_masks], l1_targets)).sum() / num_fg")
+                logger.error("origin_preds.view(-1, 4)[fg_masks].shape = {}".format(origin_preds.view(-1, 4)[fg_masks].shape))
+                logger.error("l1_targets = {}".format(l1_targets))
+                logger.error("num_fg = {}".format(num_fg))
+                         
         else:
             loss_l1 = 0.0
 
