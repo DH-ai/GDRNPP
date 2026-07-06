@@ -5,7 +5,7 @@ import os.path as osp
 import sys
 
 cur_dir = osp.dirname(osp.abspath(__file__))
-PROJ_ROOT = osp.normpath("/mnt/data/work/synthetic-data-yolo-training_and_pose_estimation/src/blenderproc_proj") # added the path to blenderproc 
+PROJ_ROOT = osp.normpath("/mnt/data/work/synthetic-data-yolo-training_and_pose_estimation/src") # added the path to src this time
 sys.path.insert(0, PROJ_ROOT)
 import time
 from collections import OrderedDict

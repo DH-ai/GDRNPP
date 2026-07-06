@@ -13,7 +13,7 @@ from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.structures import BoxMode
 
 cur_dir = osp.dirname(osp.abspath(__file__))
-PROJ_ROOT = osp.normpath("/mnt/data/work/synthetic-data-yolo-training_and_pose_estimation/src/blenderproc_proj") # added the path to blenderproc 
+PROJ_ROOT = osp.normpath("/mnt/data/work/synthetic-data-yolo-training_and_pose_estimation/src") # added the path to blenderproc 
 sys.path.insert(0, PROJ_ROOT)
 import ref
 from lib.pysixd import inout, misc
@@ -375,7 +375,7 @@ def register_with_name_cfg(name, data_cfg=None):
     else:
         assert data_cfg is not None, f"dataset name {name} is not registered"
         used_cfg = data_cfg
-    DatasetCatalog.register(name, MY_DATASET_BOP_TEST_Dataset(used_cfg))
+    DatasetCatalog.register(name, MY_DATASET_PBR_TEST_Dataset(used_cfg))
     # something like eval_types
     MetadataCatalog.get(name).set(
         id="mydataset",  # NOTE: for pvnet to determine module
@@ -383,7 +383,7 @@ def register_with_name_cfg(name, data_cfg=None):
         objs=used_cfg["objs"],
         eval_error_types=["ad", "rete", "proj"],
         evaluator_type="bop",
-        **get_mydataset_metadata(obj_names=used_cfg["objs"], ref_key=used_cfg["ref_key"]),
+        **get_my_dataset_metadata(obj_names=used_cfg["objs"], ref_key=used_cfg["ref_key"]),
     )
 
 
