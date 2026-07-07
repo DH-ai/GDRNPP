@@ -28,6 +28,15 @@ python bop_data_integrity_checker.py \
 
 You can also point --root to the parent folder containing scenes.
 """
+#  TODO: Make this file part of modernize gdrnpp repo
+# lib/
+# └── data_integrity/
+#     ├── __init__.py
+#     ├── checker.py
+#     ├── parser.py
+#     ├── validators.py
+#     ├── report.py
+#     └── cache.py
 
 from __future__ import annotations
 
@@ -41,12 +50,13 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
-
+import logging 
 from tqdm import tqdm
 
 
 IMG_EXTS = (".png", ".jpg", ".jpeg", ".bmp", ".webp")
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 @dataclass
 class SceneSummary:
@@ -92,18 +102,21 @@ def _discover_scenes(root: Path) -> List[Path]:
     if not root.exists():
         raise FileNotFoundError(f"Dataset root not found: {root}")
 
-    scene_dirs = []
+    # If the root itself contains scene files, treat root as a single scene.
+    if (root / "scene_gt.json").exists() and (root / "scene_gt_info.json").exists():
+        return [root]
+    
+    
+    scene_dirs = [] # 000001 or 000345 
     for p in sorted(root.iterdir()):
         if p.is_dir() and p.name.isdigit():
             scene_dirs.append(p)
 
-    # If the root itself contains scene files, treat root as a single scene.
-    if (root / "scene_gt.json").exists() and (root / "scene_gt_info.json").exists():
-        return [root]
+    
 
     if not scene_dirs:
         raise RuntimeError(
-            f"No scene folders found under {root}. Expected numeric folders like 000000/000001/."
+            f"No scene folders found under {root}. Expected numeric folders like 000000/000001/." 
         )
     return scene_dirs
 
