@@ -438,6 +438,7 @@ def build_integrity_report(root: Path, bbox_source: str, num_workers: int = 1) -
     
     
     try:
+        logging.info(f"Scanning {len(scene_dirs)} scenes in parallel with {num_workers} workers...")
         with ProcessPoolExecutor(max_workers=num_workers) as ex:
             futures = {ex.submit(_scan_scene, str(scene_dir), bbox_source): scene_dir for scene_dir in scene_dirs}
             for fut in tqdm(as_completed(futures), total=len(futures), desc="Scanning scenes", unit="scene"):
@@ -446,10 +447,9 @@ def build_integrity_report(root: Path, bbox_source: str, num_workers: int = 1) -
                 scene_summaries.append(summary)
                 aggregate.update(counters)
                 aggregate["images"] += summary.num_images
-    except ProcessPoolExecutor as e:
+    except Exception as e:
         logging.error(f"Error during parallel processing: {e}")
-        raise
-    if num_workers <= 1:
+        logging.info("Falling back to sequential processing.")
         iterator = scene_dirs
         for scene_dir in tqdm(iterator, desc="Scanning scenes", unit="scene"):
             scene_records, summary, counters = _scan_scene(str(scene_dir), bbox_source)
@@ -457,7 +457,7 @@ def build_integrity_report(root: Path, bbox_source: str, num_workers: int = 1) -
             scene_summaries.append(summary)
             aggregate.update(counters)
             aggregate["images"] += summary.num_images
-    else:
+
         
 
     total_annotations = int(aggregate.get("annotations", 0))
