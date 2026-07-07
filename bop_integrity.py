@@ -117,6 +117,7 @@ from tqdm import tqdm
 import time
 
 
+
 IMG_EXTS = (".png", ".jpg", ".jpeg", ".bmp", ".webp")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s",datefmt="%S:%MS")
@@ -150,6 +151,58 @@ class IntegrityReport:
     scenes: List[SceneSummary]
     counters: Dict[str, int]
     notes: List[str]
+
+
+class DatasetIntegrityError(Exception):
+    """
+    Raised when a dataset integrity check fails.
+
+    Attributes
+    ----------
+    scene_id : str | None
+        Scene in which the error occurred.
+    image_id : int | None
+        Image ID associated with the failure.
+    file_path : Path | None
+        File responsible for the failure.
+    reason : str
+        Human-readable description.
+    """
+
+    def __init__(
+        self,
+        reason: str,
+        scene_id: Optional[str] = None,
+        image_id: Optional[int] = None,
+        file_path: Optional[Path] = None,
+    ):
+        self.reason = reason
+        self.scene_id = scene_id
+        self.image_id = image_id
+        self.file_path = Path(file_path) if file_path else None
+
+        message = self._build_message()
+        super().__init__(message)
+
+    def _build_message(self) -> str:
+        parts = ["Dataset Integrity Error"]
+
+        if self.scene_id is not None:
+            parts.append(f"Scene: {self.scene_id}")
+
+        if self.image_id is not None:
+            parts.append(f"Image: {self.image_id:06d}")
+
+        if self.file_path is not None:
+            parts.append(f"File: {self.file_path}")
+
+        parts.append(f"Reason: {self.reason}")
+
+        return " | ".join(parts)
+
+    @classmethod
+    def from_message(cls, message: str):
+        return cls(reason=message)
 
 
 def _read_json(path: Path) -> Any:
@@ -239,12 +292,27 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
         num_gt_info_entries=len(gt_info),
         num_camera_entries=len(cam),
     )
+    img_exist_as_count= 0
+    ids=sorted (map(int, image_ids))
 
+    expected = set(range(ids[0], ids[-1] + 1))
+    actual = set(ids)
+
+    missing = sorted(expected - actual)
+
+    if missing:
+        raise DatasetIntegrityError(f"Scene {scene_id}: Missing image IDs: {missing}")
+
+    
     for im_id in image_ids:
         im_id_str = str(im_id)
         int_im_id = int(im_id)
         rgb_path = rgb_dir / f"{int_im_id:06d}.png"
         depth_path = depth_dir / f"{int_im_id:06d}.png"
+        if int_im_id != img_exist_as_count:
+            print(f"Image ID mismatch: expected {img_exist_as_count}, got {int_im_id} for scene {scene_id}.")
+            raise RuntimeError(f"Image ID mismatch: expected {img_exist_as_count}, got {int_im_id} for scene {scene_id}.")
+        img_exist_as_count += 1
 
         if not rgb_path.exists():
             summary.missing_rgb += 1
@@ -354,7 +422,7 @@ def build_integrity_report(root: Path, bbox_source: str, num_workers: int = 1) -
     scene_summaries: List[SceneSummary] = []
     aggregate = Counter()
 
-    if num_workers <= 1:
+    if True:
         iterator = scene_dirs
         for scene_dir in tqdm(iterator, desc="Scanning scenes", unit="scene"):
             scene_records, summary, counters = _scan_scene(str(scene_dir), bbox_source)
