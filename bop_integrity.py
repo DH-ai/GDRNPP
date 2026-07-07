@@ -21,7 +21,7 @@ Default bbox source:
 
 Usage
 -----
-python bop_data_integrity_checker.py \
+python bop_integrity.py \
     --root /path/to/train_pbr \
     --bbox-source visib \
     --cache-out /path/to/cache.pkl
@@ -90,6 +90,15 @@ You can also point --root to the parent folder containing scenes.
 # Make dataset validation a mandatory preprocessing stage before training or
 # inference, replacing the current direct JSON parsing throughout GDRNPP.
 # =============================================================================
+# validators = [
+#     FileValidator(),
+#     BBoxValidator(),
+#     ImageValidator(),
+#     MaskValidator(),
+#     PoseValidator(),
+#     CameraValidator(),
+#     DuplicateValidator(),
+# ]
 
 from __future__ import annotations
 
@@ -105,11 +114,12 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 import logging 
 from tqdm import tqdm
+import time
 
 
 IMG_EXTS = (".png", ".jpg", ".jpeg", ".bmp", ".webp")
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s",datefmt="%S:%MS")
 
 @dataclass
 class SceneSummary:
@@ -338,6 +348,7 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
 
 
 def build_integrity_report(root: Path, bbox_source: str, num_workers: int = 1) -> Tuple[List[Dict[str, Any]], IntegrityReport]:
+    time_start = time.time()
     scene_dirs = _discover_scenes(root)
     records: List[Dict[str, Any]] = []
     scene_summaries: List[SceneSummary] = []
@@ -377,33 +388,35 @@ def build_integrity_report(root: Path, bbox_source: str, num_workers: int = 1) -
             "The returned records list is Detectron2-style and can be cached in RAM for the next stage.",
         ],
     )
+    time_end = time.time()
+    logging.info(f"Integrity report generated in {time_end - time_start:.2f} seconds.")
     return records, report
 
 
 def print_report(report: IntegrityReport) -> None:
-    print("=" * 80)
-    print("DATASET INTEGRITY REPORT")
-    print("=" * 80)
-    print(f"Root        : {report.root}")
-    print(f"BBox source : {report.bbox_source}")
-    print(f"Scenes      : {report.num_scenes}")
-    print(f"Images      : {report.num_images}")
-    print(f"Records     : {report.num_records}")
-    print(f"Annotations : {report.num_annotations}")
-    print("-")
+    logging.info("=" * 80)
+    logging.info("DATASET INTEGRITY REPORT")
+    logging.info("=" * 80)
+    logging.info(f"Root        : {report.root}")
+    logging.info(f"BBox source : {report.bbox_source}")
+    logging.info(f"Scenes      : {report.num_scenes}")
+    logging.info(f"Images      : {report.num_images}")
+    logging.info(f"Records     : {report.num_records}")
+    logging.info(f"Annotations : {report.num_annotations}")
+    logging.info("-")
     for k, v in sorted(report.counters.items()):
-        print(f"{k:28s}: {v}")
-    print("-")
-    print("Per-scene summary (first 20 scenes):")
+        logging.info(f"{k:28s}: {v}")
+    logging.info("-")
+    logging.info("Per-scene summary (first 20 scenes):")
     for s in sorted(report.scenes, key=lambda x: x.scene_id)[:20]:
-        print(
+        logging.info(
             f"  scene {s.scene_id} | images={s.num_images} | gt={s.num_gt_entries} | gt_info={s.num_gt_info_entries} | cam={s.num_camera_entries} | "
             f"missing_rgb={s.missing_rgb} | missing_depth={s.missing_depth} | malformed_bbox={s.malformed_bbox} | zero_area_bbox={s.zero_area_bbox}"
         )
-    print("-")
+    logging.info("-")
     for note in report.notes:
-        print(f"NOTE: {note}")
-    print("=" * 80)
+        logging.info(f"NOTE: {note}")
+    logging.info("=" * 80)
 
 
 def save_cache(records: List[Dict[str, Any]], cache_out: Path) -> None:
@@ -429,14 +442,17 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     root = Path(args.root).expanduser().resolve()
-
-    records, report = build_integrity_report(root, bbox_source=args.bbox_source, num_workers=max(1, args.num_workers))
+    if args.num_workers=="auto":
+        num_workers = min(os.cpu_count() or 1, 8)
+    else:
+        num_workers = min(max(1, args.num_workers), os.cpu_count() or 1, 8)
+    records, report = build_integrity_report(root, bbox_source=args.bbox_source, num_workers=num_workers)
     print_report(report)
 
     if args.cache_out:
         cache_out = Path(args.cache_out).expanduser().resolve()
         save_cache(records, cache_out)
-        print(f"Saved RAM cache to: {cache_out}")
+        logging.info(f"Saved RAM cache to: {cache_out}")
 
 
 if __name__ == "__main__":
