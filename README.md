@@ -173,3 +173,11 @@ bop/
 This branch is intended as a modernization layer and does not change model architecture, training logic, or evaluation procedures.
 
 All modifications are compatibility-focused and designed to preserve original behavior while allowing execution on contemporary ML environments.
+
+
+# Moderniztion
+
+- TODO(Project): Design a reusable Dataset Infrastructure for OpenPose3D and
+modernized GDRNPP. The integrity checker should be dataset-agnostic and
+support BOP today, with COCO, YCB-V, LINEMOD, and future formats through a
+common parser/validator interface.

@@ -38,6 +38,59 @@ You can also point --root to the parent folder containing scenes.
 #     ├── report.py
 #     └── cache.py
 
+# =============================================================================
+# TODO: Replace the current ad-hoc BOP dataset loading with a dedicated
+# Dataset Integrity & Parsing Pipeline.
+#
+# Goals:
+#   1. Parse BOP datasets once and build Detectron2-style dataset dictionaries.
+#   2. Perform comprehensive integrity validation before training begins.
+#   3. Cache parsed records in RAM / disk to avoid repeated JSON parsing.
+#   4. Expose a unified DatasetLoader so Detectron2 never reads raw BOP files.
+#
+# Validation checks:
+#   [ ] Verify RGB and depth images exist and are readable by OpenCV.
+#   [ ] Validate camera intrinsics (cam_K, depth_scale, finite values).
+#   [ ] Validate poses (R orthonormal, det(R)=1, finite translations).
+#   [ ] Validate bounding boxes:
+#         - positive width/height
+#         - inside image bounds
+#         - finite coordinates
+#         - bbox_visib preferred for detection
+#   [ ] Validate masks:
+#         - existence
+#         - non-empty
+#         - consistent with bbox_visib
+#   [ ] Cross-check consistency between:
+#         scene_gt.json
+#         scene_gt_info.json
+#         scene_camera.json
+#         RGB / Depth / Mask / Mask_Visib
+#   [ ] Detect duplicate images / annotations via hashing.
+#   [ ] Compute dataset statistics:
+#         class counts
+#         bbox distributions
+#         visibility statistics
+#         pose distributions
+#         image resolutions
+#   [ ] Generate a detailed integrity report (JSON + HTML).
+#   [ ] Save visual debugging outputs for failed validations.
+#
+# Architecture:
+#
+# DatasetLoader
+#      │
+#      ├── Cache Manager
+#      ├── BOP Parser
+#      ├── Integrity Validator
+#      ├── Statistics Generator
+#      └── Detectron2 Dataset Records
+#
+# Long-term objective:
+# Make dataset validation a mandatory preprocessing stage before training or
+# inference, replacing the current direct JSON parsing throughout GDRNPP.
+# =============================================================================
+
 from __future__ import annotations
 
 import argparse
