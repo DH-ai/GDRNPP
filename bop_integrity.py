@@ -108,7 +108,7 @@ import math
 import os
 import pickle
 from collections import Counter, defaultdict
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed, exc
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
@@ -151,6 +151,7 @@ class IntegrityReport:
     scenes: List[SceneSummary]
     counters: Dict[str, int]
     notes: List[str]
+
 
 
 class DatasetIntegrityError(Exception):
@@ -204,6 +205,24 @@ class DatasetIntegrityError(Exception):
     def from_message(cls, message: str):
         return cls(reason=message)
 
+class MissingFileError(DatasetIntegrityError):
+    pass
+
+
+class InvalidBBoxError(DatasetIntegrityError):
+    pass
+
+
+class InvalidMaskError(DatasetIntegrityError):
+    pass
+
+
+class InvalidPoseError(DatasetIntegrityError):
+    pass
+
+
+class CameraIntegrityError(DatasetIntegrityError):
+    pass
 
 def _read_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as f:
@@ -303,16 +322,12 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
     if missing:
         raise DatasetIntegrityError(f"Scene {scene_id}: Missing image IDs: {missing}")
 
-    
+
     for im_id in image_ids:
         im_id_str = str(im_id)
         int_im_id = int(im_id)
         rgb_path = rgb_dir / f"{int_im_id:06d}.png"
         depth_path = depth_dir / f"{int_im_id:06d}.png"
-        if int_im_id != img_exist_as_count:
-            print(f"Image ID mismatch: expected {img_exist_as_count}, got {int_im_id} for scene {scene_id}.")
-            raise RuntimeError(f"Image ID mismatch: expected {img_exist_as_count}, got {int_im_id} for scene {scene_id}.")
-        img_exist_as_count += 1
 
         if not rgb_path.exists():
             summary.missing_rgb += 1
@@ -330,7 +345,6 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
             summary.missing_camera += 1
             counters["missing_camera"] += 1
 
-        # Build Detectron2-style record.
         # We keep it in RAM so the next stage can use it directly.
         record: Dict[str, Any] = {
             "dataset_name": f"{scene_id}",
@@ -421,16 +435,9 @@ def build_integrity_report(root: Path, bbox_source: str, num_workers: int = 1) -
     records: List[Dict[str, Any]] = []
     scene_summaries: List[SceneSummary] = []
     aggregate = Counter()
-
-    if True:
-        iterator = scene_dirs
-        for scene_dir in tqdm(iterator, desc="Scanning scenes", unit="scene"):
-            scene_records, summary, counters = _scan_scene(str(scene_dir), bbox_source)
-            records.extend(scene_records)
-            scene_summaries.append(summary)
-            aggregate.update(counters)
-            aggregate["images"] += summary.num_images
-    else:
+    
+    
+    try:
         with ProcessPoolExecutor(max_workers=num_workers) as ex:
             futures = {ex.submit(_scan_scene, str(scene_dir), bbox_source): scene_dir for scene_dir in scene_dirs}
             for fut in tqdm(as_completed(futures), total=len(futures), desc="Scanning scenes", unit="scene"):
@@ -439,6 +446,19 @@ def build_integrity_report(root: Path, bbox_source: str, num_workers: int = 1) -
                 scene_summaries.append(summary)
                 aggregate.update(counters)
                 aggregate["images"] += summary.num_images
+    except ProcessPoolExecutor as e:
+        logging.error(f"Error during parallel processing: {e}")
+        raise
+    if num_workers <= 1:
+        iterator = scene_dirs
+        for scene_dir in tqdm(iterator, desc="Scanning scenes", unit="scene"):
+            scene_records, summary, counters = _scan_scene(str(scene_dir), bbox_source)
+            records.extend(scene_records)
+            scene_summaries.append(summary)
+            aggregate.update(counters)
+            aggregate["images"] += summary.num_images
+    else:
+        
 
     total_annotations = int(aggregate.get("annotations", 0))
     report = IntegrityReport(
