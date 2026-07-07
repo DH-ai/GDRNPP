@@ -506,7 +506,7 @@ def print_report(report: IntegrityReport) -> None:
         logging.info(f"NOTE: {note}")
     logging.info("=" * 80)
 
-
+# TODO: Implment it such that I can feed this into my training pipiline
 def save_cache(records: List[Dict[str, Any]], cache_out: Path) -> None:
     cache_out.parent.mkdir(parents=True, exist_ok=True)
     with cache_out.open("wb") as f:
