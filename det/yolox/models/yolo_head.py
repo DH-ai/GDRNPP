@@ -437,6 +437,29 @@ class YOLOXHead(nn.Module):
     def get_l1_target(self, l1_target, gt, stride, x_shifts, y_shifts, eps=1e-8):
         l1_target[:, 0] = gt[:, 0] / stride - x_shifts
         l1_target[:, 1] = gt[:, 1] / stride - y_shifts
+
+        # catching any error for l1_target calculation, if gt is not finite or width/height is <= 0
+        if not torch.isfinite(gt).all():
+            print("GT BAD")
+            print(gt)
+
+        if (gt[:,2] <= 0).any():
+            print("BAD WIDTH")
+            print(gt)
+
+        if (gt[:,3] <= 0).any():
+            print("BAD HEIGHT")
+            print(gt)
+
+        l1_target[:,2] = torch.log(gt[:,2]/stride + eps)
+        l1_target[:,3] = torch.log(gt[:,3]/stride + eps)
+
+        if not torch.isfinite(l1_target).all():
+            print("BAD L1 TARGET")
+            print(gt)
+            print(stride)
+            print(l1_target)
+            raise RuntimeError("Invalid l1 target")
         l1_target[:, 2] = torch.log(gt[:, 2] / stride + eps)
         l1_target[:, 3] = torch.log(gt[:, 3] / stride + eps)
         return l1_target
