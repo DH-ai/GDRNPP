@@ -154,7 +154,7 @@ class IntegrityReport:
     num_records: int
     scenes: List[SceneSummary]
     counters: Dict[str, int]
-    bad_ids_per_scene: Dict[str, list[str]]
+    bad_ids_per_scene: Dict[str,Dict[str, List[str]]]
     notes: List[str]
 
 
@@ -318,10 +318,14 @@ def _get_bbox_from_info(ann_info: Dict[str, Any], bbox_source: str) -> Optional[
         return ann_info.get("bbox_visib") or ann_info.get("bbox_obj")
     return ann_info.get("bbox_obj") or ann_info.get("bbox_visib")
 
-def _reg_bad_id(bad_ids: Dict[str, list[str]], im_id: str, reason: str):
-    if im_id not in bad_ids:
-            bad_ids.setdefault(im_id, []).append(reason)
-def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]], SceneSummary, Dict[str, int], Dict[str, list[str]]]:
+def _reg_bad_id(bad_ids: Dict[str, Dict[str, List[str]]],scene_id: str,  im_id: str, reason: str):
+    if scene_id not in bad_ids:
+        bad_ids[scene_id] = {}
+    if im_id not in bad_ids[scene_id]:
+        bad_ids[scene_id][im_id] = []
+    bad_ids[scene_id][im_id].append(reason)
+
+def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]], SceneSummary, Dict[str, int], Dict[str, Dict[str, List[str]]]]:
     scene_path = Path(scene_dir)
     scene_id = scene_path.name
 
@@ -361,7 +365,7 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
     if missing:
         raise DatasetIntegrityError(f"Scene {scene_id}: Missing image IDs: {missing}")
 
-    bad_ids = dict[str, list[str]]()
+    bad_ids = dict[str, Dict[str, List[str]]]()
     for im_id in image_ids:
         
         im_id_str = str(im_id)
@@ -372,23 +376,23 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
         if not rgb_path.exists():
             summary.missing_rgb += 1
             counters["missing_rgb"] += 1
-            _reg_bad_id(bad_ids, im_id_str, "missing_rgb")
+            _reg_bad_id(bad_ids, scene_id, im_id_str, "missing_rgb")
         if not depth_path.exists():
             summary.missing_depth += 1
             counters["missing_depth"] += 1
-            _reg_bad_id(bad_ids, im_id_str, "missing_depth")
+            _reg_bad_id(bad_ids, scene_id, im_id_str, "missing_depth")
         if im_id_str not in gt:
             summary.missing_gt += 1
             counters["missing_gt"] += 1
-            _reg_bad_id(bad_ids, im_id_str, "missing_gt")
+            _reg_bad_id(bad_ids, scene_id, im_id_str, "missing_gt")
         if im_id_str not in gt_info:
             summary.missing_gt_info += 1
             counters["missing_gt_info"] += 1
-            _reg_bad_id(bad_ids, im_id_str, "missing_gt_info")
+            _reg_bad_id(bad_ids, scene_id, im_id_str, "missing_gt_info")
         if im_id_str not in cam:
             summary.missing_camera += 1
             counters["missing_camera"] += 1
-            _reg_bad_id(bad_ids, im_id_str,     "missing_camera")
+            _reg_bad_id(bad_ids, scene_id, im_id_str, "missing_camera")
 
         # We keep it in RAM so the next stage can use it directly.
         record: Dict[str, Any] = {
@@ -438,24 +442,24 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
                 logging.error(f"Scene {scene_id}, Image {int_im_id:06d}, Annotation {anno_idx}: {e}")
                 summary.malformed_bbox += 1
                 counters["stride_error"] += 1
-                _reg_bad_id(bad_ids, im_id_str, f"stride_error_{anno_idx}")
+                _reg_bad_id(bad_ids, scene_id, im_id_str, f"stride_error_{anno_idx}")
 
                 continue
             if not valid_bbox:
                 summary.malformed_bbox += 1
                 counters["malformed_bbox"] += 1
-                _reg_bad_id(bad_ids, im_id_str, f"malformed_bbox_{anno_idx}")
+                _reg_bad_id(bad_ids, scene_id, im_id_str, f"malformed_bbox_{anno_idx}")
                 continue
             if zero_area:
                 summary.zero_area_bbox += 1
                 counters["zero_area_bbox"] += 1
-                _reg_bad_id(bad_ids, im_id_str, f"zero_area_bbox_{anno_idx}")
+                _reg_bad_id(bad_ids, scene_id, im_id_str, f"zero_area_bbox_{anno_idx}")
                 continue
             # validate l1 loss
             if stride :
                 summary.malformed_bbox += 1
                 counters["stride_error_"] += 1
-                _reg_bad_id(bad_ids, im_id_str, f"stride_error_{anno_idx}")
+                _reg_bad_id(bad_ids, scene_id, im_id_str, f"stride_error_{anno_idx}")
 
 
 
@@ -466,11 +470,11 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
             if mask_dir.exists() and not mask_path.exists():
                 summary.missing_mask_files += 1
                 counters["missing_mask_files"] += 1
-                _reg_bad_id(bad_ids, im_id_str, f"missing_mask_files_{anno_idx}")
+                _reg_bad_id(bad_ids, scene_id, im_id_str, f"missing_mask_files_{anno_idx}")
             if mask_visib_dir.exists() and not mask_visib_path.exists():
                 summary.missing_mask_visib_files += 1
                 counters["missing_mask_visib_files"] += 1
-                _reg_bad_id(bad_ids, im_id_str, f"missing_mask_visib_files_{anno_idx}")
+                _reg_bad_id(bad_ids, scene_id, im_id_str, f"missing_mask_visib_files_{anno_idx}")
 
             record["annotations"].append(
                 {
@@ -558,8 +562,9 @@ def print_report(report: IntegrityReport) -> None:
     logging.info("-")
     # if report.bad_ids_per_scene:
     logging.info("Bad IDs per scene:")
-    for img_id, bad_ids in report.bad_ids_per_scene.items():
-        logging.info(f"  Image {img_id}: {bad_ids} bad annotations")
+    for scene_id, img_bad_ids in report.bad_ids_per_scene.items():
+        for img_id, bad_ids in img_bad_ids.items():
+            logging.info(f"  Scene {scene_id}, Image {img_id}: {bad_ids} bad annotations")
     # else:
     #     logging.info("No bad IDs found in any scene.")
     # logging.info("-")
