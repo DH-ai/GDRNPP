@@ -15,7 +15,7 @@ import core.utils.my_comm as comm
 import detectron2.data.transforms as T
 import torch
 from torch import nn
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 import torch.distributed as dist
 from core.utils.my_writer import MyPeriodicWriter
 from det.yolox.utils import (
@@ -370,8 +370,10 @@ class YOLOX_DefaultTrainer(TrainerBase):
         targets.requires_grad = False
         inps, targets = self.preprocess(inps, targets, self.input_size)
         data_time = time.perf_counter() - start
-
-        with autocast(enabled=self.cfg.train.amp.enabled):
+        #The constructor for class "autocast" is deprecated
+        #   `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+        
+        with autocast("cuda",enabled=self.cfg.train.amp.enabled):
             out_dict, loss_dict = self.model(inps, targets)
             if isinstance(loss_dict, torch.Tensor):
                 losses = loss_dict
