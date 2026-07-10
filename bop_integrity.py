@@ -260,7 +260,7 @@ def _discover_scenes(root: Path) -> List[Path]:
 
     if not scene_dirs:
         raise RuntimeError(
-            f"No scene folders found under {root}. Expected numeric folders like 000000/000001/." 
+            f"No scene folders found under {root}. Expected numeric folders like 000000/ 000001/." 
         )
     return scene_dirs
 
@@ -494,7 +494,7 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
         if record["annotations"]:
             records.append(record)
             counters["records"] += 1
-
+    logging.info(f"according to records we have {len(records)} records for scene {scene_id} and {summary.num_images} images")
     return records, summary, dict(counters), bad_ids
 
 
