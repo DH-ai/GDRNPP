@@ -50,6 +50,7 @@ You can also point --root to the parent folder containing scenes.
 #
 # Validation checks:
 #   [ ] Verify RGB and depth images exist and are readable by OpenCV.
+#   [ ] Validating L1 loss calculations for inf loss before hand 
 #   [ ] Validate camera intrinsics (cam_K, depth_scale, finite values).
 #   [ ] Validate poses (R orthonormal, det(R)=1, finite translations).
 #   [ ] Validate bounding boxes:
@@ -108,19 +109,22 @@ import math
 import os
 import pickle
 from collections import Counter, defaultdict
-from concurrent.futures import ProcessPoolExecutor, as_completed, exc
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 import logging 
 from tqdm import tqdm
 import time
-
+import numpy as np
 
 
 IMG_EXTS = (".png", ".jpg", ".jpeg", ".bmp", ".webp")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s",datefmt="%S:%MS")
+
+
+STRIDE = [8, 16, 32]  # strides of YOLOX detection head, used for scaling images to multiples of 32
 
 @dataclass
 class SceneSummary:
@@ -150,6 +154,7 @@ class IntegrityReport:
     num_records: int
     scenes: List[SceneSummary]
     counters: Dict[str, int]
+    bad_ids_per_scene: Dict[str, list[str]]
     notes: List[str]
 
 
@@ -224,6 +229,10 @@ class InvalidPoseError(DatasetIntegrityError):
 class CameraIntegrityError(DatasetIntegrityError):
     pass
 
+
+
+
+
 def _read_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
@@ -256,19 +265,46 @@ def _discover_scenes(root: Path) -> List[Path]:
     return scene_dirs
 
 
-def _validate_bbox(bbox: Sequence[float]) -> Tuple[bool, bool]:
-    """Return (is_valid, zero_area)."""
+def _validate_bbox(bbox: Sequence[float]) -> Tuple[bool, bool, bool]:
+    # """Return (is_valid, zero_area, ridiculous_area)."""
+    # print(f"Validating bbox: {bbox}")
     if bbox is None or len(bbox) != 4:
-        return False, False
+        return False, False, False
     try:
         x, y, w, h = [float(v) for v in bbox]
+        
     except Exception:
-        return False, False
+        return False, False, False
     if not all(math.isfinite(v) for v in (x, y, w, h)):
-        return False, False
-    if w <= 0 or h <= 0:
-        return True, True
-    return True, False
+        return False, False, True
+    if w <= 0 or h <= 0 or x <= 0 or y <= 0:
+        return False, True, False
+
+    # Sometimes the width is positive but ridiculous.
+
+    if w > 960 or h > 600:
+
+        return False, False, True
+    # check stride 
+    eps=1e-8
+    for s in STRIDE:
+        tx = x / s
+        ty = y / s
+        try:
+            np.log(tx)
+            np.log(ty)
+        except:
+            raise ValueError(f"Invalid stride values for bbox: {bbox}")
+        tw = np.log(w / s + eps)
+        th = np.log(h / s + eps)
+        arr = np.array([tx, ty, tw, th])
+        if not np.isfinite(arr).all():
+            return True, False, True
+        
+
+
+        
+    return True, False, False, 
 
 
 def _get_bbox_from_info(ann_info: Dict[str, Any], bbox_source: str) -> Optional[List[float]]:
@@ -282,8 +318,10 @@ def _get_bbox_from_info(ann_info: Dict[str, Any], bbox_source: str) -> Optional[
         return ann_info.get("bbox_visib") or ann_info.get("bbox_obj")
     return ann_info.get("bbox_obj") or ann_info.get("bbox_visib")
 
-
-def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]], SceneSummary, Dict[str, int]]:
+def _reg_bad_id(bad_ids: Dict[str, list[str]], im_id: str, reason: str):
+    if im_id not in bad_ids:
+            bad_ids.setdefault(im_id, []).append(reason)
+def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]], SceneSummary, Dict[str, int], Dict[str, list[str]]]:
     scene_path = Path(scene_dir)
     scene_id = scene_path.name
 
@@ -314,6 +352,7 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
     img_exist_as_count= 0
     ids=sorted (map(int, image_ids))
 
+
     expected = set(range(ids[0], ids[-1] + 1))
     actual = set(ids)
 
@@ -322,8 +361,9 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
     if missing:
         raise DatasetIntegrityError(f"Scene {scene_id}: Missing image IDs: {missing}")
 
-
+    bad_ids = dict[str, list[str]]()
     for im_id in image_ids:
+        
         im_id_str = str(im_id)
         int_im_id = int(im_id)
         rgb_path = rgb_dir / f"{int_im_id:06d}.png"
@@ -332,18 +372,23 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
         if not rgb_path.exists():
             summary.missing_rgb += 1
             counters["missing_rgb"] += 1
+            _reg_bad_id(bad_ids, im_id_str, "missing_rgb")
         if not depth_path.exists():
             summary.missing_depth += 1
             counters["missing_depth"] += 1
+            _reg_bad_id(bad_ids, im_id_str, "missing_depth")
         if im_id_str not in gt:
             summary.missing_gt += 1
             counters["missing_gt"] += 1
+            _reg_bad_id(bad_ids, im_id_str, "missing_gt")
         if im_id_str not in gt_info:
             summary.missing_gt_info += 1
             counters["missing_gt_info"] += 1
+            _reg_bad_id(bad_ids, im_id_str, "missing_gt_info")
         if im_id_str not in cam:
             summary.missing_camera += 1
             counters["missing_camera"] += 1
+            _reg_bad_id(bad_ids, im_id_str,     "missing_camera")
 
         # We keep it in RAM so the next stage can use it directly.
         record: Dict[str, Any] = {
@@ -385,16 +430,34 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
 
         for anno_idx, (anno, ann_info) in enumerate(zip(gt_list, info_list)):
             obj_id = anno.get("obj_id")
+            # print(obj_id, anno_idx, im_id_str, scene_id)
             bbox = _get_bbox_from_info(ann_info, bbox_source)
-            valid_bbox, zero_area = _validate_bbox(bbox)
+            try:
+                valid_bbox, zero_area, stride = _validate_bbox(bbox)
+            except ValueError as e:
+                logging.error(f"Scene {scene_id}, Image {int_im_id:06d}, Annotation {anno_idx}: {e}")
+                summary.malformed_bbox += 1
+                counters["stride_error"] += 1
+                _reg_bad_id(bad_ids, im_id_str, f"stride_error_{anno_idx}")
+
+                continue
             if not valid_bbox:
                 summary.malformed_bbox += 1
                 counters["malformed_bbox"] += 1
+                _reg_bad_id(bad_ids, im_id_str, f"malformed_bbox_{anno_idx}")
                 continue
             if zero_area:
                 summary.zero_area_bbox += 1
                 counters["zero_area_bbox"] += 1
+                _reg_bad_id(bad_ids, im_id_str, f"zero_area_bbox_{anno_idx}")
                 continue
+            # validate l1 loss
+            if stride :
+                summary.malformed_bbox += 1
+                counters["stride_error_"] += 1
+                _reg_bad_id(bad_ids, im_id_str, f"stride_error_{anno_idx}")
+
+
 
             # Optional mask checks. We validate only existence pattern, not pixel content.
             mask_name = f"{int_im_id:06d}_{anno_idx:06d}.png"
@@ -403,9 +466,11 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
             if mask_dir.exists() and not mask_path.exists():
                 summary.missing_mask_files += 1
                 counters["missing_mask_files"] += 1
+                _reg_bad_id(bad_ids, im_id_str, f"missing_mask_files_{anno_idx}")
             if mask_visib_dir.exists() and not mask_visib_path.exists():
                 summary.missing_mask_visib_files += 1
                 counters["missing_mask_visib_files"] += 1
+                _reg_bad_id(bad_ids, im_id_str, f"missing_mask_visib_files_{anno_idx}")
 
             record["annotations"].append(
                 {
@@ -426,7 +491,7 @@ def _scan_scene(scene_dir: str, bbox_source: str) -> Tuple[List[Dict[str, Any]],
             records.append(record)
             counters["records"] += 1
 
-    return records, summary, dict(counters)
+    return records, summary, dict(counters), bad_ids
 
 
 def build_integrity_report(root: Path, bbox_source: str, num_workers: int = 1) -> Tuple[List[Dict[str, Any]], IntegrityReport]:
@@ -435,14 +500,14 @@ def build_integrity_report(root: Path, bbox_source: str, num_workers: int = 1) -
     records: List[Dict[str, Any]] = []
     scene_summaries: List[SceneSummary] = []
     aggregate = Counter()
-    
+    bad_ids_per_scene: Dict[str, list[str]] = {}
     
     try:
         logging.info(f"Scanning {len(scene_dirs)} scenes in parallel with {num_workers} workers...")
         with ProcessPoolExecutor(max_workers=num_workers) as ex:
             futures = {ex.submit(_scan_scene, str(scene_dir), bbox_source): scene_dir for scene_dir in scene_dirs}
             for fut in tqdm(as_completed(futures), total=len(futures), desc="Scanning scenes", unit="scene"):
-                scene_records, summary, counters = fut.result()
+                scene_records, summary, counters, bad_ids_per_scene = fut.result()
                 records.extend(scene_records)
                 scene_summaries.append(summary)
                 aggregate.update(counters)
@@ -452,13 +517,11 @@ def build_integrity_report(root: Path, bbox_source: str, num_workers: int = 1) -
         logging.info("Falling back to sequential processing.")
         iterator = scene_dirs
         for scene_dir in tqdm(iterator, desc="Scanning scenes", unit="scene"):
-            scene_records, summary, counters = _scan_scene(str(scene_dir), bbox_source)
+            scene_records, summary, counters, bad_ids_per_scene = _scan_scene(str(scene_dir), bbox_source)
             records.extend(scene_records)
             scene_summaries.append(summary)
             aggregate.update(counters)
             aggregate["images"] += summary.num_images
-
-        
 
     total_annotations = int(aggregate.get("annotations", 0))
     report = IntegrityReport(
@@ -470,6 +533,7 @@ def build_integrity_report(root: Path, bbox_source: str, num_workers: int = 1) -
         num_records=int(aggregate.get("records", 0)),
         scenes=scene_summaries,
         counters=dict(aggregate),
+        bad_ids_per_scene=bad_ids_per_scene,
         notes=[
             "bbox_source='visib' uses bbox_visib from scene_gt_info.json and falls back to bbox_obj.",
             "A zero-area bbox (w<=0 or h<=0) is flagged and skipped.",
@@ -492,6 +556,15 @@ def print_report(report: IntegrityReport) -> None:
     logging.info(f"Records     : {report.num_records}")
     logging.info(f"Annotations : {report.num_annotations}")
     logging.info("-")
+    # if report.bad_ids_per_scene:
+    logging.info("Bad IDs per scene:")
+    for img_id, bad_ids in report.bad_ids_per_scene.items():
+        logging.info(f"  Image {img_id}: {bad_ids} bad annotations")
+    # else:
+    #     logging.info("No bad IDs found in any scene.")
+    # logging.info("-")
+
+    # logging.info("Counters:")
     for k, v in sorted(report.counters.items()):
         logging.info(f"{k:28s}: {v}")
     logging.info("-")
@@ -505,6 +578,7 @@ def print_report(report: IntegrityReport) -> None:
     for note in report.notes:
         logging.info(f"NOTE: {note}")
     logging.info("=" * 80)
+
 
 # TODO: Implment it such that I can feed this into my training pipiline
 def save_cache(records: List[Dict[str, Any]], cache_out: Path) -> None:
