@@ -14,8 +14,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 import cv2
 import numpy as np
 import torch
-from detectron2.config import LazyConfig
-from detectron2.engine.defaults import instantiate
+from detectron2.config import LazyConfig, instantiate
 
 from core.utils.my_checkpoint import MyCheckpointer
 from det.yolox.utils import fuse_model
