@@ -2,7 +2,7 @@
 
 Run with::
 
-    python -m det.yolox.prediction.cli_predict --config CONFIG.py \
+    python -m det.yolox.prediction.cli_predict --config-file CONFIG.py \
         --checkpoint model_final.pth --source images/ --output predictions/
 """
 
@@ -11,15 +11,17 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 from .yolox_predictor import YOLOXPredictor
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run GDRNPP YOLOX prediction")
-    parser.add_argument("--config", required=True, help="Detectron2 LazyConfig file")
-    parser.add_argument("--checkpoint", required=True, help="Model checkpoint")
+    parser.add_argument(
+        "--config-file", "--config", dest="config_file", required=True, help="Detectron2 LazyConfig file"
+    )
+    parser.add_argument("--checkpoint", "--ckpt", dest="checkpoint", required=True, help="Model checkpoint")
     parser.add_argument("--source", required=True, help="Image file or image folder")
     parser.add_argument("--output", type=Path, help="Output directory")
     parser.add_argument("--device", help="Torch device, e.g. cuda, cuda:0, or cpu")
@@ -40,13 +42,34 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
-    args = build_parser().parse_args(argv)
+def pred_main(args: argparse.Namespace) -> Dict[str, Any]:
+    """Execute every prediction operation requested by parsed CLI arguments.
+
+    This function is intentionally separate from argument parsing so another
+    Python entrypoint can create an ``argparse.Namespace`` and reuse the exact
+    CLI execution path.
+
+    Returns:
+        A dictionary containing the predictor, raw results, printable summary,
+        and optional benchmark results.
+    """
     if (args.save_images or args.save_json) and args.output is None:
         raise SystemExit("--output is required with --save-images or --save-json")
+    if args.batch_size <= 0:
+        raise SystemExit("--batch-size must be positive")
+    if args.benchmark is not None and args.benchmark <= 0:
+        raise SystemExit("--benchmark must be a positive number of iterations")
+
+    source = Path(args.source)
+    if not source.exists():
+        raise SystemExit(f"Source does not exist: {source}")
+
+    config_file = getattr(args, "config_file", None) or getattr(args, "config", None)
+    if config_file is None:
+        raise SystemExit("--config-file is required")
 
     predictor = YOLOXPredictor(
-        args.config,
+        config_file,
         args.checkpoint,
         device=args.device,
         conf_thres=args.conf_thres,
@@ -74,8 +97,22 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     }
     print(json.dumps(summary, indent=2))
 
+    benchmark_result = None
     if args.benchmark:
-        print(json.dumps(predictor.benchmark(iterations=args.benchmark, batch_size=args.batch_size), indent=2))
+        benchmark_result = predictor.benchmark(iterations=args.benchmark, batch_size=args.batch_size)
+        print(json.dumps(benchmark_result, indent=2))
+
+    return {
+        "predictor": predictor,
+        "results": results,
+        "summary": summary,
+        "benchmark": benchmark_result,
+    }
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    """Parse command-line arguments and delegate execution to ``pred_main``."""
+    pred_main(build_parser().parse_args(argv))
     return 0
 
 
