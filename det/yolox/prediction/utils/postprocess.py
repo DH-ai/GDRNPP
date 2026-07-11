@@ -31,8 +31,8 @@ def decode_predictions(
     batches = yolox_postprocess(
         raw_predictions.clone(),
         num_classes,
-        conf_thre,
-        nms_thre,
+        conf_thres,
+        nms_thres,
         class_agnostic=class_agnostic,
     )
     results: List[Dict[str, Any]] = []
