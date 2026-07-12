@@ -58,12 +58,32 @@ with the buggy declared dims `600x960`:
 Overlaying the loader's returned targets on the network-input image confirms the
 boxes land on the objects only after the patch.
 
-**Secondary observations (NOT changed here — flagged for follow-up)**
+---
 
-- `configs/.../yolox_base.py` `basic_lr_per_img` is unused: `build_optimizer`
-  instantiates the config optimizer (`Ranger`, `lr=0.001`) as-is with no
-  batch-size lr scaling. With `total_batch_size=4` verify `lr` is appropriate.
-- `det/yolox/models/yolo_head.py get_losses`: the `try/except` around
-  `loss_l1` does not assign `loss_l1` in the `except` branch, which would raise
-  `NameError` when building `loss_dict` if the L1 computation ever throws.
-  `get_l1_target` also computes `l1_target[:, 2:4]` twice (redundant).
+## Patch 2 — Scale optimizer lr by batch size (wire in `basic_lr_per_img`)
+
+**File:** `det/yolox/engine/yolox_trainer.py` (`YOLOX_DefaultTrainer.build_optimizer`)
+
+**Problem**
+
+`configs/yolox/bop_pbr/yolox_base.py` defines `train.basic_lr_per_img = 0.01/64`
+(the upstream YOLOX base lr per image, matching the `# bs=64` comments on the
+optimizer lr), but nothing ever consumed it. `build_optimizer` instantiated the
+config optimizer with its literal lr (`Ranger`, `lr=0.001`), so the learning
+rate did **not** adapt to the batch size. An lr tuned for `bs=64` was applied
+unchanged at `total_batch_size=4`, which is far too hot for the small batch and
+hurts convergence/stability.
+
+**Fix**
+
+In `build_optimizer`, if `train.basic_lr_per_img` is set, compute
+`lr = basic_lr_per_img * total_batch_size` and assign it to `cfg.optimizer.lr`
+before instantiating (this is the standard YOLOX lr rule). For the current
+config this yields `1.5625e-4 * 4 = 6.25e-4` instead of `1e-3`. The value is
+now batch-size-consistent and tunable via `basic_lr_per_img`; set it to `None`
+to keep the optimizer's literal lr.
+
+**Note**
+
+This changes training dynamics and should be confirmed on a GPU run; it is a
+principled default, not something reproducible on the CPU-only setup here.

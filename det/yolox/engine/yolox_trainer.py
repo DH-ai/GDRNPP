@@ -518,6 +518,22 @@ class YOLOX_DefaultTrainer(TrainerBase):
             torch.optim.Optimizer:
         """
         cfg.optimizer.params.model = model
+        # YOLOX scales the base learning rate by the effective batch size:
+        #     lr = basic_lr_per_img * total_batch_size
+        # `train.basic_lr_per_img` was previously never consumed, so the lr did
+        # not adapt to the batch size (e.g. an lr tuned for bs=64 was applied
+        # unchanged at bs=4). Wire it in so the lr tracks the batch size. Set
+        # `train.basic_lr_per_img=None` to keep the optimizer's literal lr.
+        basic_lr_per_img = try_get_key(cfg, "train.basic_lr_per_img", default=None)
+        if basic_lr_per_img is not None:
+            total_batch_size = cfg.dataloader.train.total_batch_size
+            scaled_lr = basic_lr_per_img * total_batch_size
+            logger.info(
+                "Scaling lr by batch size: basic_lr_per_img={} * total_batch_size={} -> lr={} (config optimizer.lr was {})".format(
+                    basic_lr_per_img, total_batch_size, scaled_lr, cfg.optimizer.get("lr", None)
+                )
+            )
+            cfg.optimizer.lr = scaled_lr
         optimizer = instantiate(cfg.optimizer)
         optimizer = maybe_add_gradient_clipping(cfg, optimizer)
         return optimizer
