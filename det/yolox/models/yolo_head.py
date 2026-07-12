@@ -408,6 +408,10 @@ class YOLOXHead(nn.Module):
             raise NotImplementedError("Unknown cls_loss_type: {}".format(self.cls_loss_type))
 
         if self.use_l1:
+            # NOTE: initialize before the try so loss_l1 is always defined; the
+            # except branch previously left it unset, causing a NameError when
+            # building loss_dict below and masking the real failure.
+            loss_l1 = 0.0
             try:
                 loss_l1 = (self.l1_loss(origin_preds.view(-1, 4)[fg_masks], l1_targets)).sum() / num_fg
             except Exception as e:
@@ -460,8 +464,6 @@ class YOLOXHead(nn.Module):
             print(stride)
             print(l1_target)
             raise RuntimeError("Invalid l1 target")
-        l1_target[:, 2] = torch.log(gt[:, 2] / stride + eps)
-        l1_target[:, 3] = torch.log(gt[:, 3] / stride + eps)
         return l1_target
 
     @torch.no_grad()

@@ -125,6 +125,20 @@ class Base_DatasetFromList(Dataset):
     def read_data(self, dataset_dict):
         raise NotImplementedError("Not implemented")
 
+    @staticmethod
+    def _get_image_hw(file_name):
+        """Return the actual (height, width) of the image on disk.
+
+        Reads only the image header (no full decode) so bbox clipping/scaling in
+        load_anno() stays consistent with the pixels produced by
+        load_resized_img(), regardless of the declared record dimensions.
+        """
+        from PIL import Image
+
+        with Image.open(file_name) as im:
+            w, h = im.size  # PIL is (width, height)
+        return h, w
+
     def _rand_another(self, idx):
         pool = [i for i in range(self.__len__()) if i != idx]
         return np.random.choice(pool)
@@ -134,8 +148,16 @@ class Base_DatasetFromList(Dataset):
         dataset_dict = self._get_sample_dict(index)
         dataset_dict = copy.deepcopy(dataset_dict)  # it will be modified by code below
         # im annos
-        width = dataset_dict["width"]
-        height = dataset_dict["height"]
+        # NOTE: use the ACTUAL image size (not the declared record width/height)
+        # for bbox clipping and the resize ratio. load_resized_img()/preproc()
+        # derive their scale factor from the real file dimensions, so if the
+        # record dims disagree with the image on disk (e.g. record says 960x600
+        # while the rendered PNG is 1920x1200) the GT boxes are silently clipped
+        # to the wrong region and scaled by a different ratio than the image,
+        # which corrupts/destroys the targets and prevents convergence.
+        real_h, real_w = self._get_image_hw(dataset_dict["file_name"])
+        width = real_w
+        height = real_h
 
         # get target--------------------
         if dataset_dict.get("annotations", None) != None:
