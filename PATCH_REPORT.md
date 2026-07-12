@@ -87,3 +87,30 @@ to keep the optimizer's literal lr.
 
 This changes training dynamics and should be confirmed on a GPU run; it is a
 principled default, not something reproducible on the CPU-only setup here.
+
+---
+
+## Patch 3 — Make L1 loss robust and drop duplicated `get_l1_target` lines
+
+**File:** `det/yolox/models/yolo_head.py` (`get_losses`, `get_l1_target`)
+
+**Problem**
+
+1. In `get_losses`, the `try/except` guarding the `loss_l1` computation does
+   **not** assign `loss_l1` in the `except` branch. If the L1 term ever raises
+   (e.g. a shape mismatch), execution continues to `loss_dict["loss_l1"] =
+   loss_l1` and dies with `NameError: loss_l1`, masking the real error.
+2. `get_l1_target` computes `l1_target[:, 2]`/`l1_target[:, 3]` twice (once
+   before the finiteness check and again after the `raise`), the second pair
+   being dead/redundant.
+
+**Fix**
+
+1. Initialize `loss_l1 = 0.0` before the `try`, so it is always defined; the
+   `except` now degrades gracefully (skips the L1 term for that step) instead
+   of crashing, while still logging the failure.
+2. Remove the duplicated post-`raise` recomputation of `l1_target[:, 2:4]`.
+
+These are correctness/cleanup fixes; the finiteness guard behavior is
+unchanged. With Patch 1 in place the L1 term no longer receives degenerate
+targets, so this path should not trigger in normal training.
