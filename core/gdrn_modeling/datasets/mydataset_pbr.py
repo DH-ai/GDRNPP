@@ -5,7 +5,7 @@ import os.path as osp
 import sys
 
 cur_dir = osp.dirname(osp.abspath(__file__))
-PROJ_ROOT = osp.normpath("/mnt/data/work/synthetic-data-yolo-training_and_pose_estimation/src/blenderproc_proj") # added the path to blenderproc 
+PROJ_ROOT = osp.normpath("/mnt/data/work/synthetic-data-yolo-training_and_pose_estimation/src") # added the path to blenderproc 
 sys.path.insert(0, PROJ_ROOT)
 import time
 from collections import OrderedDict
@@ -313,8 +313,8 @@ SPLITS_MY_DATASET_PBR = dict(
         scale_to_meter=0.001,
         with_masks=True,  # (load masks but may not use it)
         with_depth=True,  # (load depth path here, but may not use it)
-        height=1200,
-        width=1920,
+        height=600,
+        width=960,
         use_cache=True,
         num_to_load=-1,
         filter_invalid=True,
@@ -323,13 +323,13 @@ SPLITS_MY_DATASET_PBR = dict(
     mydataset_pbr_test=dict(
         name="mydataset_pbr_test",
         objs=MY_DATASET_OBJS,  # selected 16 objects for BOP19/20
-        dataset_root=osp.join(DATASETS_ROOT, "bop/train_pbr"),
+        dataset_root=osp.join(DATASETS_ROOT, "bop/test_pbr"),
         models_root=osp.join(DATASETS_ROOT, "bop/models"),
         scale_to_meter=0.001,
         with_masks=True,  # (load masks but may not use it)
         with_depth=True,  # (load depth path here, but may not use it)
-        height=1200,
-        width=1920,
+        height=600,
+        width=960,
         use_cache=True,
         num_to_load=-1,
         filter_invalid=True,
@@ -356,8 +356,8 @@ for obj in ref.mydataset.objects:
                 scale_to_meter=0.001,
                 with_masks=True,  # (load masks but may not use it)
                 with_depth=True,  # (load depth path here, but may not use it)
-                height=1200,
-                width=1920,
+                height=600,
+                width=960,
                 use_cache=True,
                 num_to_load=-1,
                 filter_invalid=filter_invalid,

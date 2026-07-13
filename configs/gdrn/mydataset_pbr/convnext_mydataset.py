@@ -1,13 +1,13 @@
 _base_ = ["../../_base_/gdrn_base.py"]
 
-OUTPUT_DIR = "output/gdrn/hb_pbr/convnext_a6_AugCosyAAEGray_BG05_mlL1_DMask_amodalClipBox_classAware_hb"
+OUTPUT_DIR = "output/gdrn/mydataset_pbr/convnext_mydataset" #No need to change this 
 INPUT = dict(
     DZI_PAD_SCALE=1.5,
     TRUNCATE_FG=False,
     CHANGE_BG_PROB=0.5,
     COLOR_AUG_PROB=0.8,
     COLOR_AUG_TYPE="code",
-    COLOR_AUG_CODE=( 
+    COLOR_AUG_CODE=(
         "Sequential(["
         # Sometimes(0.5, PerspectiveTransform(0.05)),
         # Sometimes(0.5, CropAndPad(percent=(-0.05, 0.1))),
@@ -46,7 +46,7 @@ DATASETS = dict(
     TRAIN=("mydataset_pbr_train",),
     TEST=("mydataset_pbr_test",),
     # AP        AP50    AP75    AR      inf.time
-    DET_FILES_TEST=("datasets/BOP_DATASETS/mydataset/test/test_bboxes/yolox_x_640_mydataset_pbr_mydataset_test.json",), # need to check this path
+    DET_FILES_TEST=("datasets/BOP_DATASETS/hb/test/test_bboxes/yolox_x_640_hb_pbr_hb_test_primesense_bop19.json",),
     DET_TOPK_PER_OBJ=100,
 )
 
@@ -57,7 +57,7 @@ DATALOADER = dict(
 )
 
 MODEL = dict(
-    LOAD_DETS_TEST=True,
+    LOAD_DETS_TEST=False,
     PIXEL_MEAN=[0.0, 0.0, 0.0],
     PIXEL_STD=[255.0, 255.0, 255.0],
     BBOX_TYPE="AMODAL_CLIP",  # VISIB or AMODAL
@@ -126,7 +126,7 @@ MODEL = dict(
 )
 
 VAL = dict(
-    DATASET_NAME="hbs",
+    DATASET_NAME="mydataset_pbr",
     SCRIPT_PATH="lib/pysixd/scripts/eval_pose_results_more.py",
     TARGETS_FILENAME="test_targets_bop19.json",
     ERROR_TYPES="mspd,mssd,vsd,ad,reS,teS",
@@ -146,5 +146,5 @@ VAL = dict(
 TEST = dict(
     EVAL_PERIOD=0,
     VIS=False,
-    TEST_BBOX_TYPE="est",
+    TEST_BBOX_TYPE="gt",
 )  # gt | est
