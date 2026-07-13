@@ -149,7 +149,7 @@ class Lite(GDRN_Lite):
             renderer = None
         else:
             train_dset_meta = MetadataCatalog.get(cfg.DATASETS.TRAIN[0])
-            data_ref = ref.__dict__[train_dset_meta.ref_key]
+            data_ref = ref.__dict__[train_dset_meta.ref_key] # mydataset in our case
             train_obj_names = train_dset_meta.objs
             render_gpu_id = self.local_rank
             renderer = get_renderer(cfg, data_ref, obj_names=train_obj_names, gpu_id=render_gpu_id)
