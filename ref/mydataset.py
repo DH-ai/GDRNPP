@@ -10,7 +10,9 @@ K = np.array([[2481.9412514178307, 0.0, 978.95936559694314],
         [0.0, 2482.3917472975795, 629.72289542481894],
             [0.0, 0.0, 1.0]],dtype=np.float64)  
 
-
+camera_matrix = K
+width = 1920
+height = 1200
 
 cur_dir = osp.abspath(osp.dirname(__file__))
 root_dir = osp.normpath("/mnt/data/work/synthetic-data-yolo-training_and_pose_estimation/src")
@@ -21,7 +23,7 @@ bop_root = osp.join(data_root, "bop")
 # dataset_root = osp.join(bop_root, "mydataset")
 
 train_dir = osp.join(bop_root, "train_pbr")
-model_dir = osp.join(bop_root, "models")
+test_dir = osp.join(bop_root, "test_pbr")
 
 
 id2obj = {
@@ -35,9 +37,22 @@ obj_num = len(id2obj)
 
 
 
-camera_matrix = K
-width = 1920
-height = 1200
+
+
+# --- fields the EGL renderer / GDRN need ---
+model_dir = osp.join(bop_root, "models")
+
+texture_paths  = None          # your BlenderProc .ply models are untextured (vertex-colored), so None
+vertex_scale   = 0.001         # models are in mm -> meters (matches scale_to_meter)
+model_paths    = [osp.join(model_dir, "obj_{:06d}.ply".format(_id)) for _id in id2obj]
+model_colors   = [((i + 1) * 5, (i + 1) * 5, (i + 1) * 5) for i in range(obj_num)]
+model_eval_dir = osp.join(bop_root, "models")     # or a dedicated models_eval/ if you make one
+zNear = 0.25
+zFar  = 6.0
+center = (height / 2, width / 2)
+depth_factor = 1000.0
+
+
 
 
 def get_models_info():
