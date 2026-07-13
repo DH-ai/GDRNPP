@@ -202,3 +202,7 @@ General multi-model orchestration, robotics integration, foundation-model pipeli
 This project retains the upstream project structure and is distributed under the Apache License 2.0. See [`LICENSE`](LICENSE).
 
 The implementation builds on the original [GDRNPP BOP2022 repository](https://github.com/shanice-l/gdrnpp_bop2022). Please preserve upstream attribution and review the license before redistributing modified code or trained models.
+
+
+### 
+Trained on total 102.783593M params
