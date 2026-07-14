@@ -162,7 +162,7 @@ class MY_DATASET_PBR_Dataset:
                         if h <= 1 or w <= 1:
                             self.num_instances_without_valid_box += 1
                             continue
-
+                            
                     mask_file = osp.join(
                         scene_root,
                         "mask/{:06d}_{:06d}.png".format(int_im_id, anno_i),
@@ -195,7 +195,12 @@ class MY_DATASET_PBR_Dataset:
                     )
                     inst = {
                         "category_id": cur_label,  # 0-based label
-                        "bbox": bbox_obj,  # TODO: load both bbox_obj and bbox_visib
+                        "bbox": bbox_visib,  
+                        "bbox_visib": bbox_visib,  # NOTE: bbox_visib is used by dectron2
+                        
+                        # NOTE: bbox_obj is used by gdrnpp
+                        
+                        "bbox_obj": bbox_obj,
                         "bbox_mode": BoxMode.XYWH_ABS,
                         "pose": pose,
                         "quat": quat,
@@ -307,14 +312,14 @@ MY_DATASET_OBJS = [ref.mydataset.id2obj[_i] for _i in [1, 2, 3]]
 SPLITS_MY_DATASET_PBR = dict(
     mydataset_pbr_train=dict(
         name="mydataset_pbr_train",
-        objs=ref.mydataset.objects,  # all 33 objects
+        objs=MY_DATASET_OBJS,  # all 3 objects
         dataset_root=osp.join(DATASETS_ROOT, "bop/train_pbr"),
         models_root=osp.join(DATASETS_ROOT, "bop/models"),
         scale_to_meter=0.001,
         with_masks=True,  # (load masks but may not use it)
         with_depth=True,  # (load depth path here, but may not use it)
-        height=1200,
-        width=1920,
+        height=600,
+        width=960,
         use_cache=True,
         num_to_load=-1,
         filter_invalid=True,
@@ -322,14 +327,14 @@ SPLITS_MY_DATASET_PBR = dict(
     ),
     mydataset_pbr_test=dict(
         name="mydataset_pbr_test",
-        objs=MY_DATASET_OBJS,  # selected 16 objects for BOP19/20
+        objs=MY_DATASET_OBJS,  # selected 3 objects for 
         dataset_root=osp.join(DATASETS_ROOT, "bop/test_pbr"),
         models_root=osp.join(DATASETS_ROOT, "bop/models"),
         scale_to_meter=0.001,
         with_masks=True,  # (load masks but may not use it)
         with_depth=True,  # (load depth path here, but may not use it)
-        height=1200,
-        width=1920,
+        height=600,
+        width=960,
         use_cache=True,
         num_to_load=-1,
         filter_invalid=True,
@@ -356,8 +361,8 @@ for obj in ref.mydataset.objects:
                 scale_to_meter=0.001,
                 with_masks=True,  # (load masks but may not use it)
                 with_depth=True,  # (load depth path here, but may not use it)
-                height=1200,
-                width=1920,
+                height=600,
+                width=960,
                 use_cache=True,
                 num_to_load=-1,
                 filter_invalid=filter_invalid,
