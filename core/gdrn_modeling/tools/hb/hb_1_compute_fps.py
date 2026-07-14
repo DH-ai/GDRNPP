@@ -11,7 +11,9 @@ import ref
 from core.utils.data_utils import get_fps_and_center
 
 
-ref_key = "hb"
+# ref_key = "hb"
+# TODO: create a new fps function generator 
+ref_key = "mydataset"
 data_ref = ref.__dict__[ref_key]
 
 model_dir = data_ref.model_dir
