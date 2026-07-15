@@ -5,7 +5,7 @@ INPUT = dict(
     DZI_PAD_SCALE=1.5,
     TRUNCATE_FG=False,
     CHANGE_BG_PROB=0,# change it to zero ;ERROR:BG ROOT: datasets/VOCdevkit/VOC2012/ does not exist
-    COLOR_AUG_PROB=0.8,
+    COLOR_AUG_PROB=0.1,
     COLOR_AUG_TYPE="code",
     COLOR_AUG_CODE=(
         "Sequential(["
@@ -31,8 +31,8 @@ INPUT = dict(
 )
 
 SOLVER = dict(
-    IMS_PER_BATCH=48,
-    TOTAL_EPOCHS=40,  # 30
+    IMS_PER_BATCH=24, # 16, # 24
+    TOTAL_EPOCHS=10,  # 30
     LR_SCHEDULER_NAME="flat_and_anneal",
     ANNEAL_METHOD="cosine",  # "cosine"
     ANNEAL_POINT=0.72,
@@ -64,12 +64,13 @@ MODEL = dict(
     POSE_NET=dict(
         NAME="GDRN_double_mask",
         XYZ_ONLINE=True,
-        NUM_CLASSES=16,
+        #### Very IMPORTANT: set the correct number of classes for your dataset
+        NUM_CLASSES=3,  # change it to your number of objects
         BACKBONE=dict(
             FREEZE=False,
             PRETRAINED="timm",
             INIT_CFG=dict(
-                type="timm/convnext_base",
+                type="timm/convnext_tiny",
                 pretrained=True,
                 in_chans=3,
                 features_only=True,
@@ -83,7 +84,7 @@ MODEL = dict(
                 type="TopDownDoubleMaskXyzRegionHead",
                 in_dim=1024,  # this is num out channels of backbone conv feature
             ),
-            NUM_REGIONS=64,
+            NUM_REGIONS=16, # reduceed the from 64 to 16 for mydataset
             XYZ_CLASS_AWARE=True,
             MASK_CLASS_AWARE=True,
             REGION_CLASS_AWARE=True,
