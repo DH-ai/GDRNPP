@@ -139,13 +139,70 @@ def batch_data_train_online(cfg, data, renderer, device="cuda"):
                     batch["trans"][_i].detach().cpu().numpy().reshape(3, 1),
                 ]
             )
+            ######
+            #########
+            #########
+            ########
+            print("=" * 80)
+            print("POSE")
+
+            print("obj ids:", [int(batch["roi_cls"][_i])])
+            print("K")
+            print(batch["roi_zoom_K"][_i].detach().cpu().numpy())
+
+            print("R")
+            print(batch["ego_rot"][_i].detach().cpu().numpy())
+
+            print("t")
+            print(batch["trans"][_i].detach().cpu().numpy())
+            ######
+            #########
+            #########
+            ########
+
             renderer.render(
                 [int(batch["roi_cls"][_i])],
                 [pose],
                 K=batch["roi_zoom_K"][_i].detach().cpu().numpy(),
                 pc_cam_tensor=pc_cam_tensor,
             )
+           
+
+            
             roi_depth_batch[_i].copy_(pc_cam_tensor[:, :, 2], non_blocking=True)
+            print("="*80)
+            print("AFTER COPY")
+
+            print(roi_xyz_batch[_i].shape)
+            print(roi_xyz_batch[_i].min())
+            print(roi_xyz_batch[_i].max())
+            print((roi_xyz_batch[_i] != 0).sum())
+            ######
+            #########
+            #########
+            ########
+            print("=" * 80)
+            print("AFTER renderer.render()")
+
+            print("pc_cam_tensor")
+            print(pc_cam_tensor.shape)
+            print(pc_cam_tensor.min())
+            print(pc_cam_tensor.max())
+            print(pc_cam_tensor.mean())
+            ######
+            #########
+            #########
+            ########
+            xyz = pc_cam_tensor[..., :3]
+
+            print("xyz")
+            print(xyz.min())
+            print(xyz.max())
+            print((xyz != 0).sum())
+            ######
+            #########
+            #########
+            ########
         roi_xyz_batch = misc.calc_xyz_bp_batch(
             roi_depth_batch,
             batch["ego_rot"],
