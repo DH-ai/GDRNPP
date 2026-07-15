@@ -170,13 +170,7 @@ def batch_data_train_online(cfg, data, renderer, device="cuda"):
 
             
             roi_depth_batch[_i].copy_(pc_cam_tensor[:, :, 2], non_blocking=True)
-            print("="*80)
-            print("AFTER COPY")
 
-            print(roi_xyz_batch[_i].shape)
-            print(roi_xyz_batch[_i].min())
-            print(roi_xyz_batch[_i].max())
-            print((roi_xyz_batch[_i] != 0).sum())
             ######
             #########
             #########
@@ -210,6 +204,13 @@ def batch_data_train_online(cfg, data, renderer, device="cuda"):
             batch["roi_zoom_K"],
             fmt="BHWC",
         )
+        print("="*80)
+        print("AFTER COPY")
+
+        print(roi_xyz_batch[_i].shape)
+        print(roi_xyz_batch[_i].min())
+        print(roi_xyz_batch[_i].max())
+        print((roi_xyz_batch[_i] != 0).sum())
     else:  # directly rendering xyz
         pc_obj_tensor = torch.cuda.FloatTensor(out_res, out_res, 4, device=device).detach()  # xyz
         roi_xyz_batch = torch.empty(bs, out_res, out_res, 3, dtype=torch.float32, device=device)
