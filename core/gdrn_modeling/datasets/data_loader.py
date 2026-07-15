@@ -459,7 +459,13 @@ class GDRN_DatasetFromList(Base_DatasetFromList):
 
         if cfg.TRAIN.VIS:
             xyz = self.smooth_xyz(xyz)
+        print("="*80)
+        print("Loaded xyz")
 
+        print(type(xyz))
+        print(xyz.shape)
+        print(xyz.min(), xyz.max())
+        print(np.unique(mask)[:20])
         if cfg.MODEL.BBOX_CROP_SYN and "syn" in img_type:
             inst_infos["bbox"] = inst_infos["bbox_crop"]
         elif cfg.MODEL.BBOX_CROP_REAL and "real" in img_type:
@@ -558,7 +564,11 @@ class GDRN_DatasetFromList(Base_DatasetFromList):
 
         ## roi_xyz ----------------------------------------------------
         roi_xyz = crop_resize_by_warp_affine(xyz, bbox_center, scale, out_res, interpolation=mask_xyz_interp)
+        print("="*80)
+        print("After crop")
 
+        print(roi_xyz.min(), roi_xyz.max())
+        print(np.unique(roi_mask_visib))
         # region label
         if g_head_cfg.NUM_REGIONS > 1:
             fps_points = self._get_fps_points(dataset_name)[roi_cls]

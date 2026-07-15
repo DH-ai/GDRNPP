@@ -70,19 +70,19 @@ MODEL = dict(
             FREEZE=False,
             PRETRAINED="timm",
             INIT_CFG=dict(
-                type="timm/convnext_tiny",
+                type="timm/convnext_tiny", 
                 pretrained=True,
                 in_chans=3,
                 features_only=True,
                 out_indices=(3,),
             ),
-        ),
+        ), # out put channel [24, 768, 8, 8]
         ## geo head: Mask, XYZ, Region
         GEO_HEAD=dict(
             FREEZE=False,
             INIT_CFG=dict(
                 type="TopDownDoubleMaskXyzRegionHead",
-                in_dim=1024,  # this is num out channels of backbone conv feature
+                in_dim=768,  # this is num out channels of backbone conv feature
             ),
             NUM_REGIONS=16, # reduceed the from 64 to 16 for mydataset
             XYZ_CLASS_AWARE=True,

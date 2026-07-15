@@ -25,18 +25,18 @@ def main():
     vertex_scale = 1.0 # if already in meters
     fps_dict = {}
     for obj_id in tqdm(id2obj):
-        print(obj_id)
+        # print(obj_id)
         model_path = osp.join(model_dir, f"obj_{obj_id:06d}.ply")
         model = inout.load_ply(model_path, vertex_scale=vertex_scale)
-        print("="*80)
-        print("OBJ:", obj_id)
-        print("Model pts shape:", model["pts"].shape)
-        print("Min:", model["pts"].min(axis=0))
-        print("Max:", model["pts"].max(axis=0))
-        print("Extent:", model["pts"].max(axis=0) - model["pts"].min(axis=0))
-        print("Center:", model["pts"].mean(axis=0))
-        print("Diameter:", np.linalg.norm(model["pts"].max(axis=0)-model["pts"].min(axis=0)))
-        print("="*80)
+        # print("="*80)
+        # print("OBJ:", obj_id)
+        # print("Model pts shape:", model["pts"].shape)
+        # print("Min:", model["pts"].min(axis=0))
+        # print("Max:", model["pts"].max(axis=0))
+        # print("Extent:", model["pts"].max(axis=0) - model["pts"].min(axis=0))
+        # print("Center:", model["pts"].mean(axis=0))
+        # print("Diameter:", np.linalg.norm(model["pts"].max(axis=0)-model["pts"].min(axis=0)))
+        # print("="*80)
         fps_dict[str(obj_id)] = {}
         fps_dict[str(obj_id)]["fps4_and_center"] = get_fps_and_center(model["pts"], num_fps=4, init_center=True)
         fps_dict[str(obj_id)]["fps8_and_center"] = get_fps_and_center(model["pts"], num_fps=8, init_center=True)
@@ -46,9 +46,9 @@ def main():
         fps_dict[str(obj_id)]["fps32_and_center"] = get_fps_and_center(model["pts"], num_fps=32, init_center=True)
         fps_dict[str(obj_id)]["fps64_and_center"] = get_fps_and_center(model["pts"], num_fps=64, init_center=True)
 
-        print("FPS shape:", fps_dict[str(obj_id)]["fps64_and_center"].shape)
-        print("FPS first 10:")
-        print(fps_dict[str(obj_id)]["fps64_and_center"][:10])
+        # print("FPS shape:", fps_dict[str(obj_id)]["fps64_and_center"].shape)
+        # print("FPS first 10:")
+        # print(fps_dict[str(obj_id)]["fps64_and_center"][:10])
 
 
         fps_dict[str(obj_id)]["fps128_and_center"] = get_fps_and_center(model["pts"], num_fps=128, init_center=True)
