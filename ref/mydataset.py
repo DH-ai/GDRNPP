@@ -74,6 +74,15 @@ def get_fps_points():
         assert osp.exists(fps_points_path), fps_points_path
         
     fps_dict = mmcv.load(fps_points_path)
+    print("Loaded FPS")
+    print("="*80)
+
+    for k,v in fps_dict.items():
+        print(k)
+        print(v["fps64_and_center"][:5])
+        break
+
+    print("="*80)
     return fps_dict
 
 

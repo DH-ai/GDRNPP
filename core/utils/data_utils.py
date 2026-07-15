@@ -291,6 +291,13 @@ def xyz_to_region_batch(xyz, fps_points, mask=None):
     Returns:
         (b,h,w) 1 to num_fps, 0 is bg
     """
+    print("="*80)
+    print("xyz shape:", xyz.shape)
+    print("fps shape:", fps_points.shape)
+    print("xyz min:", xyz.min())
+    print("xyz max:", xyz.max())
+    print("fps min:", fps_points.min())
+    print("fps max:", fps_points.max())
     assert xyz.shape[-1] == 3 and xyz.ndim == 4, xyz.shape
     assert fps_points.shape[-1] == 3 and fps_points.ndim == 3, fps_points.shape
     bs, h, w = xyz.shape[:3]
@@ -299,9 +306,32 @@ def xyz_to_region_batch(xyz, fps_points, mask=None):
         mask = ((xyz[:, 0] != 0) & (xyz[:, 1] != 0) & (xyz[:, 2] != 0)).to(torch.float32)
 
     dists = torch.cdist(xyz.view(bs, -1, 3), fps_points, p=2)  # b,hw,f
+    print()
+
+    print("dists")
+    print("shape:", dists.shape)
+    print("min:", dists.min())
+    print("max:", dists.max())
+    print("mean:", dists.mean())
     region = dists.argmin(-1).view(bs, h, w) + 1  # NOTE: 1 to num_fps
+    print()
+
+    print("unique region ids")
+    print(torch.unique(region))
+
+    print("number unique:", len(torch.unique(region)))
     # b,h,w
-    return (region * mask).to(torch.long)
+    out = (region * mask).long()
+
+    print()
+
+    print("after masking")
+    print(torch.unique(out))
+
+    print("="*80)
+
+    return out
+    # return (region * mask).to(torch.long)
 
 
 def get_2d_coord_np(width, height, low=0, high=1, fmt="CHW", endpoint=False):

@@ -182,6 +182,30 @@ def batch_data_train_online(cfg, data, renderer, device="cuda"):
         batch["roi_fps_points"] = torch.stack([d["roi_fps_points"] for d in data], dim=0).to(
             device=device, dtype=torch.float32, non_blocking=True
         )
+        print("="*80)
+
+        print("roi_xyz_batch")
+        print("shape:", roi_xyz_batch.shape)
+        print("dtype:", roi_xyz_batch.dtype)
+        print("min:", roi_xyz_batch.min())
+        print("max:", roi_xyz_batch.max())
+        print("mean:", roi_xyz_batch.mean())
+
+        print()
+
+        print("roi_fps_points")
+        print("shape:", batch["roi_fps_points"].shape)
+        print("dtype:", batch["roi_fps_points"].dtype)
+        print("min:", batch["roi_fps_points"].min())
+        print("max:", batch["roi_fps_points"].max())
+        print("mean:", batch["roi_fps_points"].mean())
+
+        print()
+
+        print("roi_mask_obj unique")
+        print(torch.unique(batch["roi_mask_obj"]))
+
+        print("="*80)
         batch["roi_region"] = xyz_to_region_batch(roi_xyz_batch, batch["roi_fps_points"], mask=batch["roi_mask_obj"])
     # normalize to [0, 1]
     batch["roi_xyz"] = rearrange(roi_xyz_batch, "b h w c -> b c h w") / batch["roi_extent"].view(bs, 3, 1, 1) + 0.5

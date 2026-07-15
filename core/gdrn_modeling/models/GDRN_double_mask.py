@@ -324,7 +324,29 @@ class GDRN_DoubleMask(nn.Module):
         if not g_head_cfg.FREEZE:
             xyz_loss_type = loss_cfg.XYZ_LOSS_TYPE
             gt_mask_xyz = gt_masks[loss_cfg.XYZ_LOSS_MASK_GT]
+            print("="*80)
+
+            print("out_region")
+            print(out_region.shape)
+
+            print()
+
+            print("gt_region")
+            print(gt_region.shape)
+
+            print()
+
+            print("gt unique")
+            print(torch.unique(gt_region))
+
+            print()
+
+            print("gt min", gt_region.min())
+            print("gt max", gt_region.max())
+
+            print("="*80)
             if xyz_loss_type == "L1":
+
                 loss_func = nn.L1Loss(reduction="sum")
                 loss_dict["loss_coor_x"] = loss_func(
                     out_x * gt_mask_xyz[:, None], gt_xyz[:, 0:1] * gt_mask_xyz[:, None]
