@@ -1,5 +1,7 @@
 # GDRNPP Modernized
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/DH-ai/GDRNPP)
+
 GDRNPP Modernized is a maintained and modernized implementation of GDRNPP, a geometry-guided 6D object pose-estimation system. The repository keeps the original GDRNPP workflow—BOP datasets, YOLOX detection, GDRN pose estimation, rendering, evaluation, and inference—while addressing compatibility and reliability problems in contemporary development environments.
 
 This repository is focused on GDRNPP. It is not intended to become a general robotics, VLM, VLA, or multi-model pose-estimation platform. A future OpenPose3D or PoseToolkit project can use this repository as one of its pose-estimation backends.
